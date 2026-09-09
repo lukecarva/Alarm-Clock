@@ -9,8 +9,23 @@ O desenho completo está em **[docs/PLANO.md](docs/PLANO.md)**.
 
 ## Estado atual
 
-**Fase 0 (esqueleto) concluída.** O app sobe, fica na bandeja e registra log em
-arquivo. O agendador, os alarmes e as janelas de alerta são a Fase 1.
+**Fase 1 (MVP) concluída** — o despertador funciona de ponta a ponta: criar,
+editar e excluir alarmes; agendas de uma vez / todo dia / dias da semana; os
+quatro níveis de urgência com suas janelas; adiamento com limite por nível;
+som com fade; catch-up de alarmes perdidos durante hibernação; e início
+automático com o Windows.
+
+A Fase 2 (escalonamento automático, lembretes cíclicos, Pomodoro, detecção de
+ociosidade, estatísticas) está no [plano](docs/PLANO.md#fase-2--backlog-o-que-ficou-de-fora-do-mvp-por-escolha).
+
+## Níveis de urgência
+
+| Nível | Como aparece | Como sai |
+|---|---|---|
+| Sussurro | Toast do Windows, sem som | Sozinho, em 7s |
+| Normal | Card no canto, um toque | Um clique. Adia 5/10/15 min à vontade |
+| Importante | Janela central, toque a cada 10s | Um clique. Adia 5 min, até 3x |
+| Crítico | Tela cheia em todos os monitores, som em loop | Segurar o botão 3s. Adia 2 min, uma vez só |
 
 ## Rodando
 

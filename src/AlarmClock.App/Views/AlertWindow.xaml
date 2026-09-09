@@ -1,0 +1,206 @@
+<Window x:Class="AlarmClock.App.Views.AlertWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Alarme"
+        WindowStyle="None"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False"
+        Topmost="True"
+        Background="{StaticResource Brush.Bg}"
+        TextOptions.TextRenderingMode="ClearType">
+
+    <Window.Resources>
+        <!-- A mesma janela serve para o card do canto, o modal e o overlay de
+             tela cheia. O que muda é a escala da tipografia. -->
+        <Style x:Key="AlertTitle" TargetType="TextBlock" BasedOn="{StaticResource Text.Title}">
+            <Setter Property="FontSize" Value="26" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Mode}" Value="Corner">
+                    <Setter Property="FontSize" Value="17" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Mode}" Value="Fullscreen">
+                    <Setter Property="FontSize" Value="52" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="AlertRoot" TargetType="Grid">
+            <Setter Property="Margin" Value="28" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Mode}" Value="Corner">
+                    <Setter Property="Margin" Value="18" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Mode}" Value="Fullscreen">
+                    <Setter Property="Margin" Value="80" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+
+    <!-- Faixa da cor da urgência no topo: dá para saber a gravidade antes de ler. -->
+    <Border BorderBrush="{Binding AccentBrush}" BorderThickness="0,5,0,0">
+        <Grid Style="{StaticResource AlertRoot}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <!-- Relógio (só na tela cheia) -->
+            <TextBlock Grid.Row="0"
+                       Text="{Binding NowText}"
+                       FontFamily="{StaticResource Font.Ui}"
+                       FontSize="86"
+                       FontWeight="Light"
+                       Foreground="{StaticResource Brush.TextMuted}"
+                       Margin="0,0,0,16">
+                <TextBlock.Style>
+                    <Style TargetType="TextBlock">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding Mode}" Value="Fullscreen">
+                                <Setter Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
+
+            <!-- Nível + horário -->
+            <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,10">
+                <Border Background="{Binding AccentBrush}" CornerRadius="4" Padding="7,2">
+                    <TextBlock Text="{Binding UrgencyName}"
+                               FontFamily="{StaticResource Font.Ui}"
+                               FontSize="11"
+                               FontWeight="SemiBold"
+                               Foreground="White" />
+                </Border>
+                <TextBlock Style="{StaticResource Text.Caption}"
+                           Margin="10,0,0,0"
+                           VerticalAlignment="Center"
+                           Text="{Binding WhenText}" />
+            </StackPanel>
+
+            <TextBlock Grid.Row="2" Style="{StaticResource AlertTitle}" Text="{Binding Title}" TextWrapping="Wrap" />
+
+            <TextBlock Grid.Row="3"
+                       Style="{StaticResource Text.Body}"
+                       Margin="0,8,0,0"
+                       Text="{Binding Message}"
+                       Visibility="{Binding HasMessage, Converter={StaticResource BoolToVis}}" />
+
+            <!-- Ações -->
+            <StackPanel Grid.Row="5" Margin="0,22,0,0">
+
+                <TextBlock Style="{StaticResource Text.Caption}"
+                           Margin="0,0,0,8"
+                           Foreground="{StaticResource Brush.Accent}"
+                           Text="{Binding SnoozeRefusal}"
+                           Visibility="{Binding SnoozeRefusal, Converter={StaticResource NullToVis}}" />
+
+                <!-- Um clique resolve -->
+                <StackPanel Orientation="Horizontal">
+                    <StackPanel.Style>
+                        <Style TargetType="StackPanel">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding DismissMode}" Value="Click">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding DismissMode}" Value="Auto">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </StackPanel.Style>
+                    <Button Style="{StaticResource Button.Primary}"
+                            Content="Ok, entendi"
+                            Command="{Binding DismissCommand}" />
+                </StackPanel>
+
+                <!-- Segurar para dispensar -->
+                <StackPanel>
+                    <StackPanel.Style>
+                        <Style TargetType="StackPanel">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding DismissMode}" Value="HoldButton">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </StackPanel.Style>
+                    <Button x:Name="HoldButton"
+                            Style="{StaticResource Button.Primary}"
+                            HorizontalAlignment="Left"
+                            Content="Segure 3s para dispensar" />
+                    <ProgressBar Height="4"
+                                 Width="230"
+                                 HorizontalAlignment="Left"
+                                 Margin="0,6,0,0"
+                                 Minimum="0"
+                                 Maximum="1"
+                                 Value="{Binding HoldProgress, Mode=OneWay}"
+                                 Background="{StaticResource Brush.Border}"
+                                 Foreground="{Binding AccentBrush}"
+                                 BorderThickness="0" />
+                </StackPanel>
+
+                <!-- Digitar a frase -->
+                <StackPanel>
+                    <StackPanel.Style>
+                        <Style TargetType="StackPanel">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding DismissMode}" Value="TypePhrase">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </StackPanel.Style>
+                    <TextBlock Style="{StaticResource Text.Caption}">
+                        <Run Text="Digite" />
+                        <Run Text="{Binding DismissPhrase, Mode=OneWay}" FontWeight="Bold" />
+                        <Run Text="para dispensar" />
+                    </TextBlock>
+                    <TextBox x:Name="PhraseBox"
+                             Width="220"
+                             HorizontalAlignment="Left"
+                             Margin="0,6,0,0"
+                             Padding="8,6"
+                             FontFamily="{StaticResource Font.Ui}"
+                             FontSize="14"
+                             Background="{StaticResource Brush.Surface}"
+                             Foreground="{StaticResource Brush.Text}"
+                             CaretBrush="{StaticResource Brush.Text}"
+                             BorderBrush="{StaticResource Brush.Border}" />
+                </StackPanel>
+
+                <!-- Adiar -->
+                <StackPanel Margin="0,16,0,0"
+                            Visibility="{Binding CanSnooze, Converter={StaticResource BoolToVis}}">
+                <TextBlock Style="{StaticResource Text.Caption}" Text="Adiar por:" Margin="0,0,0,6" />
+                <ItemsControl ItemsSource="{Binding SnoozeOptions}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Horizontal" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Button Style="{StaticResource Button.Ghost}"
+                                    Margin="0,0,8,0"
+                                    Content="{Binding Label}"
+                                    Command="{Binding DataContext.SnoozeCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                    CommandParameter="{Binding}" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                </StackPanel>
+            </StackPanel>
+        </Grid>
+    </Border>
+</Window>

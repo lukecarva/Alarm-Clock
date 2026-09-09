@@ -65,9 +65,16 @@ public sealed class TrayIconService : IDisposable
     }
 
     /// <summary>
-    /// Texto do tooltip. A Fase 1 alimenta isto com o próximo disparo
-    /// ("Próximo: Reunião em 42 min").
+    /// Notificação nativa do Windows — o alerta do nível Sussurro. Sujeita ao
+    /// Assistente de Foco, que pode engoli-la sem avisar: é justamente por isso
+    /// que só o nível mais baixo usa este caminho.
     /// </summary>
+    public void ShowBalloon(string title, string message)
+    {
+        _icon?.ShowNotification(title, message);
+    }
+
+    /// <summary>Texto do tooltip: "Próximo: Reunião em 42 min".</summary>
     public void SetStatus(string text)
     {
         if (_icon is not null)

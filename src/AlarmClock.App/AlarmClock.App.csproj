@@ -8,6 +8,7 @@
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
     <PackageReference Include="H.NotifyIcon.Wpf" Version="2.3.2" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
+    <PackageReference Include="NAudio" Version="2.2.1" />
     <PackageReference Include="Serilog.Extensions.Hosting" Version="8.0.0" />
     <PackageReference Include="Serilog.Sinks.File" Version="6.0.0" />
   </ItemGroup>
@@ -18,6 +19,10 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
+    <!-- Só para System.Windows.Forms.Screen: enumerar monitores e áreas de
+         trabalho. Escrever isso à mão com EnumDisplayMonitors seria muito mais
+         código para o mesmo resultado. -->
+    <UseWindowsForms>true</UseWindowsForms>
     <AssemblyName>DespertadorProdutivo</AssemblyName>
     <RootNamespace>AlarmClock.App</RootNamespace>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
@@ -28,6 +33,15 @@
     <!-- Precisa ser Resource (e não só ApplicationIcon) para o pack:// URI do
          ícone da bandeja resolver em tempo de execução. -->
     <Resource Include="Assets\app.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- UseWindowsForms joga System.Windows.Forms nos implicit usings, e aí
+         Application, MessageBox e afins ficam ambíguos com os do WPF. Os poucos
+         tipos do WinForms que usamos (Screen) são qualificados na mão. -->
+    <Using Remove="System.Windows.Forms" />
+    <!-- Mesmo motivo: System.Drawing.Brush/Color/Point colidem com os do WPF. -->
+    <Using Remove="System.Drawing" />
   </ItemGroup>
 
 </Project>

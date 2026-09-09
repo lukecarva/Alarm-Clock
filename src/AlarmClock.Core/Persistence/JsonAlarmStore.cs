@@ -26,6 +26,9 @@ public sealed class JsonAlarmStore : IAlarmStore
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
         // Sem escapar acentos: o arquivo é para ser lido por gente.
         Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+        // "Critical" em vez de 3. O arquivo só é editável à mão se der para
+        // entender o que está escrito nele.
+        Converters = { new JsonStringEnumConverter() },
     };
 
     private readonly string _path;

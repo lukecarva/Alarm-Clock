@@ -4,8 +4,11 @@ using System.Windows.Threading;
 using AlarmClock.App.Services;
 using AlarmClock.App.ViewModels;
 using AlarmClock.Core.Abstractions;
+using AlarmClock.Core.Persistence;
+using AlarmClock.Core.Scheduling;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Serilog;
 using Serilog.Events;
 using MainWindowView = AlarmClock.App.Views.MainWindow;
@@ -58,18 +61,42 @@ public partial class App : Application
                 services.AddSingleton<IHostLifetime, WpfHostLifetime>();
 
                 services.AddSingleton<ISystemClock, SystemClock>();
+                services.AddSingleton<IAlarmStore>(sp => new JsonAlarmStore(
+                    AppPaths.AlarmsFile,
+                    sp.GetRequiredService<ILogger<JsonAlarmStore>>()));
+
+                services.AddSingleton<IAlarmScheduler, AlarmScheduler>();
+                services.AddSingleton<IAlertPresenter, WpfAlertPresenter>();
+
+                services.AddSingleton<AlarmsService>();
+                services.AddSingleton<AlarmDialogs>();
+                services.AddSingleton<StartupRegistrar>();
                 services.AddSingleton<TrayIconService>();
+
                 services.AddSingleton<MainViewModel>();
                 services.AddSingleton<MainWindowView>();
+
+                // Por último: ao subir, ele já carrega os alarmes e começa a
+                // tiquetaquear, e por isso precisa da bandeja de pé antes.
+                services.AddHostedService<SchedulerHost>();
             })
             .Build();
 
-        _host.Start();
-
+        // A bandeja antes do host: o SchedulerHost escreve o status nela assim
+        // que inicia.
         _host.Services.GetRequiredService<TrayIconService>().Show();
 
-        // Na Fase 1 isto passa a respeitar uma configuração ("iniciar minimizado").
-        _host.Services.GetRequiredService<MainWindowView>().Show();
+        _host.Start();
+
+        var janela = _host.Services.GetRequiredService<MainWindowView>();
+        MainWindow = janela;
+
+        // --minimized: como o app sobe junto com o Windows, jogar a janela na
+        // cara de quem acabou de ligar o PC seria péssima educação.
+        if (!e.Args.Contains("--minimized", StringComparer.OrdinalIgnoreCase))
+        {
+            janela.Show();
+        }
     }
 
     protected override void OnExit(ExitEventArgs e)

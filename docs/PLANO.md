@@ -215,16 +215,38 @@ Decisões tomadas durante a execução, que valem para o resto do projeto:
 - **Projetos WPF não trazem `System.IO` nos implicit usings** (para não colidir
   `System.IO.Path` com `System.Windows.Shapes.Path`); precisa de `using` explícito.
 
-### Fase 1 — MVP ✅ *este é o entregável*
+### Fase 1 — MVP ✅ concluída
 
-1. Domínio: `Alarm`, `ISchedule` (once/daily/weekly), `UrgencyProfile`
-2. `AlarmScheduler` + `ISystemClock` + testes (incluindo DST e virada de dia)
-3. `JsonAlarmStore` com escrita atômica
-4. CRUD de alarmes na UI + bandeja + single instance
-5. As 4 janelas de alerta + áudio com fade
-6. Snooze com política por nível
-7. Resiliência a sleep e mudança de hora + catch-up de alarmes perdidos
-8. Autostart via `HKCU\...\CurrentVersion\Run` (não precisa de admin)
+1. ✅ Domínio: `Alarm`, `ISchedule` (once/daily/weekly), `UrgencyProfile`
+2. ✅ `AlarmScheduler` + `ISystemClock` + testes (incluindo DST e virada de dia)
+3. ✅ `JsonAlarmStore` com escrita atômica
+4. ✅ CRUD de alarmes na UI + bandeja + single instance
+5. ✅ As 4 janelas de alerta + áudio com fade
+6. ✅ Snooze com política por nível
+7. ✅ Resiliência a sleep e mudança de hora + catch-up de alarmes perdidos
+8. ✅ Autostart via `HKCU\...\CurrentVersion\Run` (não precisa de admin)
+
+Decisões tomadas durante a execução:
+
+- **`Resume` chama `Tick`, `TimeChanged` chama `Reload`.** Acordar da
+  hibernação é exatamente quando o catch-up precisa rodar; já mexer no relógio
+  é ato deliberado do usuário, e disparar em rajada tudo que "venceu" com a
+  conta nova seria pior que perder as ocorrências.
+- **Alarme perdido é rebaixado, não silenciado.** `ShowOnReturn` vira card no
+  canto sem som: um alarme de três horas atrás não merece tela cheia com
+  sirene, mas você precisa saber que ele existiu.
+- **O toque é sintetizado** (`AlarmToneProvider`), não um `.wav` embutido —
+  sem áudio de terceiros no repositório, e o intervalo entre repetições vira
+  parâmetro do perfil. Som do usuário continua suportado por caminho de arquivo.
+- **Janelas de alerta são posicionadas em pixels físicos** via `SetWindowPos`.
+  WPF trabalha em DIPs e o `Screen` do WinForms devolve pixels; converter entre
+  os dois em multi-monitor com escalas diferentes é fonte permanente de janela
+  fora do lugar.
+- **O card do canto usa `SizeToContent`.** Com altura fixa, os botões de adiar
+  ficavam cortados quando o alarme tinha mensagem — foi o que a verificação
+  pegou.
+- **Enums no JSON como texto** (`"Critical"`, não `3`): o arquivo só é editável
+  à mão se der para entender o que está escrito nele.
 
 **Critério de pronto:** criar um alarme Crítico, colocar o PC para dormir,
 acordar depois da hora e o alarme disparar com o resumo do atraso.

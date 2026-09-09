@@ -1,0 +1,34 @@
+<Window x:Class="AlarmClock.App.Views.OverlayWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Alarme"
+        WindowStyle="None"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False"
+        Topmost="True"
+        Background="{StaticResource Brush.Bg}">
+
+    <!-- Monitores secundários durante um alerta crítico: cobrir a tela e dizer
+         o que está acontecendo. Os controles ficam só na tela principal, para
+         não haver dúvida sobre onde clicar. -->
+    <Border BorderBrush="{Binding AccentBrush}" BorderThickness="0,5,0,0">
+        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+            <TextBlock Text="{Binding NowText}"
+                       FontFamily="{StaticResource Font.Ui}"
+                       FontSize="86"
+                       FontWeight="Light"
+                       Foreground="{StaticResource Brush.TextMuted}"
+                       HorizontalAlignment="Center" />
+            <TextBlock Text="{Binding Title}"
+                       Style="{StaticResource Text.Title}"
+                       FontSize="40"
+                       Margin="0,12,0,0"
+                       TextAlignment="Center"
+                       HorizontalAlignment="Center" />
+            <TextBlock Style="{StaticResource Text.Caption}"
+                       Margin="0,14,0,0"
+                       TextAlignment="Center"
+                       Text="Use a tela principal para dispensar" />
+        </StackPanel>
+    </Border>
+</Window>
