@@ -1,0 +1,68 @@
+<Window x:Class="AlarmClock.App.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Despertador Produtivo"
+        Height="520" Width="720"
+        MinHeight="420" MinWidth="560"
+        WindowStartupLocation="CenterScreen"
+        Background="{StaticResource Brush.Bg}"
+        TextOptions.TextRenderingMode="ClearType">
+
+    <Grid Margin="28">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Cabeçalho -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,20">
+            <TextBlock Style="{StaticResource Text.Title}" Text="Despertador Produtivo" />
+            <TextBlock Style="{StaticResource Text.Caption}"
+                       Margin="0,4,0,0"
+                       Text="{Binding NextAlarmSummary}" />
+        </StackPanel>
+
+        <!-- Estado vazio -->
+        <Border Grid.Row="1" Style="{StaticResource Card}">
+            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" MaxWidth="420">
+                <Ellipse Width="52" Height="52"
+                         Fill="{StaticResource Brush.Accent}"
+                         Opacity="0.16"
+                         HorizontalAlignment="Center" />
+                <TextBlock Style="{StaticResource Text.Body}"
+                           Margin="0,18,0,0"
+                           FontSize="15"
+                           FontWeight="SemiBold"
+                           TextAlignment="Center"
+                           Text="Fase 0 — esqueleto no ar" />
+                <TextBlock Style="{StaticResource Text.Caption}"
+                           Margin="0,8,0,0"
+                           TextAlignment="Center"
+                           Text="Bandeja, injeção de dependências e log em arquivo já estão funcionando. O agendador, os níveis de urgência e as janelas de alerta chegam na Fase 1." />
+                <TextBlock Style="{StaticResource Text.Caption}"
+                           Margin="0,16,0,0"
+                           TextAlignment="Center"
+                           Text="Fechar esta janela não encerra o app — ele continua na bandeja." />
+            </StackPanel>
+        </Border>
+
+        <!-- Rodapé -->
+        <Grid Grid.Row="2" Margin="0,18,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                <TextBlock Style="{StaticResource Text.Caption}" Text="{Binding DataFolder, StringFormat='Dados e logs: {0}'}" />
+                <TextBlock Style="{StaticResource Text.Caption}" Margin="0,2,0,0" Text="{Binding Version, StringFormat='versão {0}'}" />
+            </StackPanel>
+
+            <Button Grid.Column="1"
+                    Style="{StaticResource Button.Ghost}"
+                    Content="Abrir pasta de dados"
+                    Command="{Binding OpenDataFolderCommand}" />
+        </Grid>
+    </Grid>
+</Window>
