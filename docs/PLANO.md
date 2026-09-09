@@ -119,7 +119,11 @@ public sealed record UrgencyProfile
 [JsonDerivedType(typeof(WeeklySchedule),  "weekly")]
 public interface ISchedule
 {
-    DateTimeOffset? NextOccurrenceAfter(DateTimeOffset from);
+    // O fuso é parâmetro, e não estado, porque agendas recorrentes guardam hora
+    // de parede: "todo dia às 7h" continua às 7h depois da virada do horário de
+    // verão. Sem ele, a resolução de DST não teria como ser pura nem testável.
+    DateTimeOffset? NextOccurrenceAfter(DateTimeOffset from, TimeZoneInfo zone);
+    string Describe();
 }
 ```
 
