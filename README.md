@@ -15,8 +15,11 @@ quatro níveis de urgência com suas janelas; adiamento com limite por nível;
 som com fade; catch-up de alarmes perdidos durante hibernação; e início
 automático com o Windows.
 
-A Fase 2 (escalonamento automático, lembretes cíclicos, Pomodoro, detecção de
-ociosidade, estatísticas) está no [plano](docs/PLANO.md#fase-2--backlog-o-que-ficou-de-fora-do-mvp-por-escolha).
+**Fase 2 em andamento.** Já entraram os lembretes cíclicos ("a cada 45 min",
+com faixa de horário opcional que pode atravessar a meia-noite) e a detecção de
+ausência, que pula o alerta quando teclado e mouse estão parados — para não
+empilhar avisos numa cadeira vazia. O que falta está no
+[plano](docs/PLANO.md#fase-2--em-andamento).
 
 ## Níveis de urgência
 

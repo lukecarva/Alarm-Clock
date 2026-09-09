@@ -12,6 +12,7 @@ public enum ScheduleKind
     Once,
     Daily,
     Weekly,
+    Interval,
 }
 
 /// <summary>Um dia da semana no seletor do editor.</summary>
@@ -40,8 +41,19 @@ public sealed partial class AlarmEditorViewModel : ObservableObject
 {
     private static readonly CultureInfo PtBr = new("pt-BR");
 
+    /// <summary>
+    /// Quanto tempo de teclado e mouse parados já conta como "não estou aqui".
+    /// </summary>
+    private static readonly TimeSpan IdleThreshold = TimeSpan.FromMinutes(5);
+
     private readonly ISystemClock _clock;
     private readonly Guid _id;
+
+    /// <summary>Âncora do ciclo do alarme sendo editado, quando havia uma.</summary>
+    private readonly DateTimeOffset? _ancoraOriginal;
+
+    /// <summary>Intervalo que o alarme tinha ao ser aberto para edição.</summary>
+    private readonly TimeSpan? _intervaloOriginal;
 
     public AlarmEditorViewModel(ISystemClock clock, Alarm? existente = null)
     {
@@ -77,7 +89,15 @@ public sealed partial class AlarmEditorViewModel : ObservableObject
         _title = existente.Title;
         _message = existente.Message ?? string.Empty;
         _customSoundPath = existente.CustomSoundPath ?? string.Empty;
+        _skipWhenAway = existente.SkipIfIdleFor is not null;
         SelectUrgency(existente.Urgency);
+
+        if (existente.Schedule is IntervalSchedule intervalo)
+        {
+            _ancoraOriginal = intervalo.Anchor;
+            _intervaloOriginal = intervalo.Every;
+        }
+
         LoadSchedule(existente.Schedule);
     }
 
@@ -109,10 +129,29 @@ public sealed partial class AlarmEditorViewModel : ObservableObject
     [ObservableProperty]
     private string? _validationError;
 
+    /// <summary>Minutos entre disparos, quando a agenda é por intervalo.</summary>
+    [ObservableProperty]
+    private string _intervalMinutesText = "45";
+
+    [ObservableProperty]
+    private bool _useWindow = true;
+
+    [ObservableProperty]
+    private string _windowFromText = "09:00";
+
+    [ObservableProperty]
+    private string _windowToText = "18:00";
+
+    /// <summary>Não alertar se o teclado e o mouse estiverem parados.</summary>
+    [ObservableProperty]
+    private bool _skipWhenAway;
+
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsOnce))]
     [NotifyPropertyChangedFor(nameof(IsDaily))]
     [NotifyPropertyChangedFor(nameof(IsWeekly))]
+    [NotifyPropertyChangedFor(nameof(IsInterval))]
+    [NotifyPropertyChangedFor(nameof(HasFixedTime))]
     private ScheduleKind _kind = ScheduleKind.Daily;
 
     public bool IsOnce
@@ -132,6 +171,15 @@ public sealed partial class AlarmEditorViewModel : ObservableObject
         get => Kind == ScheduleKind.Weekly;
         set { if (value) { Kind = ScheduleKind.Weekly; } }
     }
+
+    public bool IsInterval
+    {
+        get => Kind == ScheduleKind.Interval;
+        set { if (value) { Kind = ScheduleKind.Interval; } }
+    }
+
+    /// <summary>Agenda por intervalo não tem hora marcada — tem ritmo.</summary>
+    public bool HasFixedTime => Kind != ScheduleKind.Interval;
 
     /// <summary>Preenchido quando o usuário confirma; nulo se cancelou.</summary>
     public Alarm? Result { get; private set; }
@@ -184,7 +232,9 @@ public sealed partial class AlarmEditorViewModel : ObservableObject
             return false;
         }
 
-        if (!TimeOnly.TryParseExact(TimeText.Trim(), "HH\\:mm", PtBr, DateTimeStyles.None, out var hora))
+        var hora = default(TimeOnly);
+
+        if (HasFixedTime && !TimeOnly.TryParseExact(TimeText.Trim(), "HH\\:mm", PtBr, DateTimeStyles.None, out hora))
         {
             erro = "Horário inválido. Use HH:mm, por exemplo 07:30.";
             return false;
@@ -194,6 +244,45 @@ public sealed partial class AlarmEditorViewModel : ObservableObject
 
         switch (Kind)
         {
+            case ScheduleKind.Interval:
+                if (!int.TryParse(IntervalMinutesText.Trim(), out var minutos) || minutos < 1)
+                {
+                    erro = "Intervalo inválido. Informe os minutos, por exemplo 45.";
+                    return false;
+                }
+
+                TimeOnly? de = null;
+                TimeOnly? ate = null;
+
+                if (UseWindow)
+                {
+                    if (!TimeOnly.TryParseExact(WindowFromText.Trim(), "HH\\:mm", PtBr, DateTimeStyles.None, out var inicio) ||
+                        !TimeOnly.TryParseExact(WindowToText.Trim(), "HH\\:mm", PtBr, DateTimeStyles.None, out var fim))
+                    {
+                        erro = "Faixa de horário inválida. Use HH:mm nos dois campos.";
+                        return false;
+                    }
+
+                    if (inicio == fim)
+                    {
+                        erro = "A faixa de horário precisa ter início e fim diferentes.";
+                        return false;
+                    }
+
+                    de = inicio;
+                    ate = fim;
+                }
+
+                // Mexer no intervalo reinicia a contagem; mexer só no título ou
+                // na urgência preserva o ritmo que já estava correndo.
+                var novoIntervalo = TimeSpan.FromMinutes(minutos);
+                var ancora = novoIntervalo == _intervaloOriginal && _ancoraOriginal is not null
+                    ? _ancoraOriginal.Value
+                    : _clock.Now;
+
+                agenda = new IntervalSchedule(novoIntervalo, ancora, de, ate);
+                break;
+
             case ScheduleKind.Once:
                 if (!DateOnly.TryParseExact(DateText.Trim(), "dd/MM/yyyy", PtBr, DateTimeStyles.None, out var data))
                 {
@@ -243,6 +332,7 @@ public sealed partial class AlarmEditorViewModel : ObservableObject
             Schedule = agenda,
             Urgency = urgencia,
             CustomSoundPath = string.IsNullOrWhiteSpace(CustomSoundPath) ? null : CustomSoundPath.Trim(),
+            SkipIfIdleFor = SkipWhenAway ? IdleThreshold : null,
         };
 
         return true;
@@ -280,6 +370,19 @@ public sealed partial class AlarmEditorViewModel : ObservableObject
             case DailySchedule daily:
                 Kind = ScheduleKind.Daily;
                 TimeText = daily.At.ToString("HH\\:mm");
+                break;
+
+            case IntervalSchedule intervalo:
+                Kind = ScheduleKind.Interval;
+                IntervalMinutesText = ((int)intervalo.Every.TotalMinutes).ToString(PtBr);
+                UseWindow = intervalo.HasWindow;
+
+                if (intervalo.HasWindow)
+                {
+                    WindowFromText = intervalo.ActiveFrom!.Value.ToString("HH\\:mm");
+                    WindowToText = intervalo.ActiveTo!.Value.ToString("HH\\:mm");
+                }
+
                 break;
         }
     }

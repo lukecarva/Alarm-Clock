@@ -70,6 +70,8 @@ public sealed partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void NewAlarm()
     {
+        _log.LogDebug("Abrindo o editor para um alarme novo.");
+
         var criado = _dialogs.Edit(null);
         if (criado is not null)
         {

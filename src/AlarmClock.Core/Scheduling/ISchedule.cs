@@ -38,6 +38,7 @@ public static class WeekDaysExtensions
 [JsonDerivedType(typeof(OneTimeSchedule), "once")]
 [JsonDerivedType(typeof(DailySchedule), "daily")]
 [JsonDerivedType(typeof(WeeklySchedule), "weekly")]
+[JsonDerivedType(typeof(IntervalSchedule), "interval")]
 public interface ISchedule
 {
     /// <summary>

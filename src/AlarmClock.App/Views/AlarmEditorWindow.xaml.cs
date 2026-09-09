@@ -10,6 +10,10 @@ public partial class AlarmEditorWindow : Window
         InitializeComponent();
         DataContext = viewModel;
 
+        // SizeToContent sozinho deixaria a janela passar da tela. O teto vem da
+        // área de trabalho real, então funciona igual em 768p e em 4K.
+        MaxHeight = Math.Max(420, SystemParameters.WorkArea.Height - 60);
+
         viewModel.CloseRequested += confirmado =>
         {
             DialogResult = confirmado;

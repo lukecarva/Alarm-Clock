@@ -61,6 +61,7 @@ public partial class App : Application
                 services.AddSingleton<IHostLifetime, WpfHostLifetime>();
 
                 services.AddSingleton<ISystemClock, SystemClock>();
+                services.AddSingleton<IIdleDetector, Win32IdleDetector>();
                 services.AddSingleton<IAlarmStore>(sp => new JsonAlarmStore(
                     AppPaths.AlarmsFile,
                     sp.GetRequiredService<ILogger<JsonAlarmStore>>()));

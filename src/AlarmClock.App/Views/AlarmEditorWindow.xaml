@@ -9,12 +9,23 @@
         Background="{StaticResource Brush.Bg}"
         TextOptions.TextRenderingMode="ClearType">
 
-    <StackPanel Margin="24">
+    <!-- Conteúdo rolável com as ações fixas embaixo. Com o modo "a cada" e a
+         faixa de horário abertos, o formulário passa da altura de uma tela de
+         768px — e um botão Salvar fora do alcance é um formulário quebrado. -->
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto" Padding="0,0,4,0">
+        <StackPanel Margin="24,24,24,0">
 
         <TextBlock Style="{StaticResource Text.Title}" Text="{Binding WindowTitle}" Margin="0,0,0,20" />
 
         <TextBlock Style="{StaticResource Text.Label}" Text="NOME" />
         <TextBox Style="{StaticResource Field.Text}"
+                 AutomationProperties.AutomationId="CampoNome"
                  Text="{Binding Title, UpdateSourceTrigger=PropertyChanged}" />
 
         <TextBlock Style="{StaticResource Text.Label}" Text="DETALHE (OPCIONAL)" Margin="0,16,0,6" />
@@ -26,6 +37,44 @@
             <RadioButton Style="{StaticResource Chip.Radio}" Content="Uma vez" IsChecked="{Binding IsOnce}" />
             <RadioButton Style="{StaticResource Chip.Radio}" Content="Todo dia" IsChecked="{Binding IsDaily}" />
             <RadioButton Style="{StaticResource Chip.Radio}" Content="Dias da semana" IsChecked="{Binding IsWeekly}" />
+            <RadioButton Style="{StaticResource Chip.Radio}" Content="A cada…" IsChecked="{Binding IsInterval}" />
+        </StackPanel>
+
+        <!-- Intervalo: o modo dos lembretes cíclicos (água, alongar, vista) -->
+        <StackPanel Visibility="{Binding IsInterval, Converter={StaticResource BoolToVis}}" Margin="0,8,0,0">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Style="{StaticResource Text.Body}" VerticalAlignment="Center" Text="A cada" />
+                <TextBox Style="{StaticResource Field.Text}"
+                         AutomationProperties.AutomationId="CampoIntervalo"
+                         Width="70"
+                         Margin="8,0"
+                         Text="{Binding IntervalMinutesText, UpdateSourceTrigger=PropertyChanged}" />
+                <TextBlock Style="{StaticResource Text.Body}" VerticalAlignment="Center" Text="minutos" />
+            </StackPanel>
+
+            <ToggleButton Style="{StaticResource Chip.Toggle}"
+                          Margin="0,10,0,0"
+                          HorizontalAlignment="Left"
+                          Content="Só dentro de uma faixa de horário"
+                          IsChecked="{Binding UseWindow}" />
+
+            <StackPanel Orientation="Horizontal"
+                        Visibility="{Binding UseWindow, Converter={StaticResource BoolToVis}}">
+                <TextBlock Style="{StaticResource Text.Body}" VerticalAlignment="Center" Text="das" />
+                <TextBox Style="{StaticResource Field.Text}"
+                         Width="80"
+                         Margin="8,0"
+                         Text="{Binding WindowFromText, UpdateSourceTrigger=PropertyChanged}" />
+                <TextBlock Style="{StaticResource Text.Body}" VerticalAlignment="Center" Text="às" />
+                <TextBox Style="{StaticResource Field.Text}"
+                         Width="80"
+                         Margin="8,0,0,0"
+                         Text="{Binding WindowToText, UpdateSourceTrigger=PropertyChanged}" />
+            </StackPanel>
+
+            <TextBlock Style="{StaticResource Text.Caption}"
+                       Margin="0,8,0,0"
+                       Text="A faixa pode atravessar a meia-noite, como 22:00 às 06:00." />
         </StackPanel>
 
         <!-- Dias da semana -->
@@ -63,13 +112,21 @@
                          Text="{Binding DateText, UpdateSourceTrigger=PropertyChanged}" />
             </StackPanel>
 
-            <StackPanel Grid.Column="1">
+            <StackPanel Grid.Column="1" Visibility="{Binding HasFixedTime, Converter={StaticResource BoolToVis}}">
                 <TextBlock Style="{StaticResource Text.Label}" Text="HORA" />
                 <TextBox Style="{StaticResource Field.Text}"
                          Width="90"
                          Text="{Binding TimeText, UpdateSourceTrigger=PropertyChanged}" />
             </StackPanel>
         </Grid>
+
+        <TextBlock Style="{StaticResource Text.Label}" Text="PRESENÇA" Margin="0,20,0,6" />
+        <ToggleButton Style="{StaticResource Chip.Toggle}"
+                      HorizontalAlignment="Left"
+                      Content="Não alertar se eu estiver ausente"
+                      IsChecked="{Binding SkipWhenAway}" />
+        <TextBlock Style="{StaticResource Text.Caption}"
+                   Text="Pula o alerta se o teclado e o mouse estiverem parados há mais de 5 minutos. Vale para o disparo na hora — alarme perdido e adiamento seguem as regras do nível." />
 
         <TextBlock Style="{StaticResource Text.Label}" Text="URGÊNCIA" Margin="0,20,0,6" />
         <ItemsControl ItemsSource="{Binding Urgencies}">
@@ -123,7 +180,13 @@
                    Text="{Binding ValidationError}"
                    Visibility="{Binding ValidationError, Converter={StaticResource NullToVis}}" />
 
-        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,22,0,0">
+        </StackPanel>
+        </ScrollViewer>
+
+        <StackPanel Grid.Row="1"
+                    Orientation="Horizontal"
+                    HorizontalAlignment="Right"
+                    Margin="24,18,24,24">
             <Button Style="{StaticResource Button.Ghost}"
                     Content="Cancelar"
                     Margin="0,0,8,0"
@@ -133,5 +196,5 @@
                     Command="{Binding SaveCommand}"
                     IsDefault="True" />
         </StackPanel>
-    </StackPanel>
+    </Grid>
 </Window>

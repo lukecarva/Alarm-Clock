@@ -251,15 +251,36 @@ Decisões tomadas durante a execução:
 **Critério de pronto:** criar um alarme Crítico, colocar o PC para dormir,
 acordar depois da hora e o alarme disparar com o resumo do atraso.
 
-### Fase 2 — Backlog (o que ficou de fora do MVP por escolha)
+### Fase 2 — em andamento
 
-- **Escalonamento automático** de urgência
-- **Lembretes cíclicos de saúde**: água a cada 45min, alongar a cada 1h, 20-20-20 ocular
-- **Pomodoro / blocos de foco** com contagem regressiva
-- **Detecção de ociosidade** (`GetLastInputInfo` via P/Invoke): não alarmar quando você não está, e alertar quando você está há 3h sem levantar
-- **Estatísticas**: tempo no PC, alarmes atendidos vs. adiados vs. ignorados
-- **Acordar o PC** para o alarme (`SetWaitableTimer` com wake, ou uma tarefa no Agendador do Windows com *Wake the computer*)
-- Modo Não Perturbe com janelas de horário; sons customizados; importar/exportar
+- ✅ **Lembretes cíclicos** (`IntervalSchedule`): "a cada 45 min", com faixa de
+  horário opcional que pode atravessar a meia-noite
+- ✅ **Detecção de ociosidade** (`GetLastInputInfo`): não alertar cadeira vazia
+- ⬜ **Escalonamento automático** de urgência
+- ⬜ **"Você está há 3h sem levantar"** — o outro lado da detecção de presença
+- ⬜ **Pomodoro / blocos de foco** com contagem regressiva
+- ⬜ **Estatísticas**: tempo no PC, alarmes atendidos vs. adiados vs. ignorados
+- ⬜ **Acordar o PC** para o alarme (`SetWaitableTimer` com wake, ou uma tarefa
+  no Agendador do Windows com *Wake the computer*)
+- ⬜ Modo Não Perturbe com janelas de horário; importar/exportar
+
+Decisões da parte já feita:
+
+- **Intervalo é duração absoluta; a faixa de horário é hora de parede.** "A cada
+  45 minutos" são 45 minutos reais e o ciclo atravessa o horário de verão sem se
+  deslocar; já "só entre 9h e 18h" fala do relógio. São os dois regimes de tempo
+  do projeto convivendo na mesma agenda, de propósito.
+- **A âncora do ciclo é persistida.** Sem ela, fechar e abrir o app reiniciaria a
+  contagem, e o lembrete das 9h45 viraria "45 minutos depois de cada boot".
+  Mexer no intervalo reinicia a contagem; mexer no título, não.
+- **O pulo por ausência vale só para o disparo na hora.** Alarme perdido já tem
+  a política do `WhenAway`, e adiamento foi você que pediu — descartá-lo por
+  ausência jogaria fora algo explicitamente adiado.
+- **Propriedades calculadas ganharam `[JsonIgnore]`.** Sem isso cada alarme
+  gravava uma cópia inteira do perfil de urgência no arquivo — 45 linhas de JSON
+  onde bastam 13, desnormalizando justamente o que o desenho mantém num lugar
+  só. O defeito vinha da Fase 1 e só apareceu aqui, na primeira vez que o app
+  **escreveu** o arquivo em vez de só lê-lo.
 
 ---
 

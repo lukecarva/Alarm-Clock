@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace AlarmClock.Core.Model;
 
 /// <summary>
@@ -100,8 +102,10 @@ public sealed record SnoozePolicy
     /// <summary>Quantos adiamentos seguidos são permitidos antes de o app parar de aceitar.</summary>
     public required int MaxCount { get; init; }
 
+    [JsonIgnore]
     public bool IsEnabled => MaxCount > 0 && Options.Count > 0;
 
+    [JsonIgnore]
     public TimeSpan DefaultOption => Options.Count > 0 ? Options[0] : TimeSpan.FromMinutes(5);
 }
 

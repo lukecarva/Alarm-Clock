@@ -17,20 +17,37 @@ public sealed class WpfAlertPresenter : IAlertPresenter
 {
     private readonly IAlarmScheduler _scheduler;
     private readonly TrayIconService _tray;
+    private readonly IIdleDetector _idle;
     private readonly ILogger<WpfAlertPresenter> _log;
 
     /// <summary>Alertas na tela, por alarme. Impede dois alertas do mesmo alarme.</summary>
     private readonly Dictionary<Guid, AlertSession> _abertos = [];
 
-    public WpfAlertPresenter(IAlarmScheduler scheduler, TrayIconService tray, ILogger<WpfAlertPresenter> log)
+    public WpfAlertPresenter(
+        IAlarmScheduler scheduler,
+        TrayIconService tray,
+        IIdleDetector idle,
+        ILogger<WpfAlertPresenter> log)
     {
         _scheduler = scheduler;
         _tray = tray;
+        _idle = idle;
         _log = log;
     }
 
     public void Show(AlarmTriggeredEventArgs trigger)
     {
+        if (ShouldSkipForAbsence(trigger, out var ocioso))
+        {
+            _log.LogInformation(
+                "Alarme {Titulo} pulado: teclado e mouse parados há {Ocioso}.",
+                trigger.Alarm.Title,
+                ocioso);
+
+            _scheduler.Dismiss(trigger.Alarm.Id);
+            return;
+        }
+
         var resolvido = Resolve(trigger);
 
         if (resolvido is null)
@@ -126,6 +143,27 @@ public sealed class WpfAlertPresenter : IAlertPresenter
             Win32Windows.PlacePhysical(overlay, tela.Bounds, activate: false);
             sessao.Overlays.Add(overlay);
         }
+    }
+
+    /// <summary>
+    /// Vale a pena alertar uma cadeira vazia?
+    /// </summary>
+    /// <remarks>
+    /// Só para o disparo na hora: alarme perdido já tem a política do
+    /// <c>WhenAway</c>, e adiamento foi você que pediu — descartar por ausência
+    /// jogaria fora algo explicitamente adiado.
+    /// </remarks>
+    private bool ShouldSkipForAbsence(AlarmTriggeredEventArgs trigger, out TimeSpan ocioso)
+    {
+        ocioso = TimeSpan.Zero;
+
+        if (trigger.Kind != TriggerKind.OnTime || trigger.Alarm.SkipIfIdleFor is not { } limite)
+        {
+            return false;
+        }
+
+        ocioso = _idle.IdleFor;
+        return ocioso >= limite;
     }
 
     /// <summary>
