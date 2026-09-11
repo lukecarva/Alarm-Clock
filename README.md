@@ -16,10 +16,11 @@ som com fade; catch-up de alarmes perdidos durante hibernação; e início
 automático com o Windows.
 
 **Fase 2 em andamento.** Já entraram os lembretes cíclicos ("a cada 45 min",
-com faixa de horário opcional que pode atravessar a meia-noite) e a detecção de
-ausência, que pula o alerta quando teclado e mouse estão parados — para não
-empilhar avisos numa cadeira vazia. O que falta está no
-[plano](docs/PLANO.md#fase-2--em-andamento).
+com faixa de horário opcional que pode atravessar a meia-noite), a detecção de
+ausência (pula o alerta quando teclado e mouse estão parados, para não empilhar
+avisos numa cadeira vazia) e o **escalonamento automático**: um alarme ignorado
+por 10 minutos, ou adiado 2 vezes, volta um nível acima — até chegar a Crítico.
+O que falta está no [plano](docs/PLANO.md#fase-2--em-andamento).
 
 ## Níveis de urgência
 

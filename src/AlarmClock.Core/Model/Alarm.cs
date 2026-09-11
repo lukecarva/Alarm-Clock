@@ -39,6 +39,9 @@ public sealed record Alarm
     /// </remarks>
     public TimeSpan? SkipIfIdleFor { get; init; }
 
+    /// <summary>Faz o alarme subir de nível quando ignorado. Nulo = não escala.</summary>
+    public EscalationPolicy? Escalation { get; init; }
+
     /// <remarks>
     /// <see cref="JsonIgnore"/> é essencial: sem ele, cada alarme gravaria uma
     /// cópia inteira do perfil de urgência no arquivo. Além de inchar o JSON,

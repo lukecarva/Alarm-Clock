@@ -256,7 +256,8 @@ acordar depois da hora e o alarme disparar com o resumo do atraso.
 - ✅ **Lembretes cíclicos** (`IntervalSchedule`): "a cada 45 min", com faixa de
   horário opcional que pode atravessar a meia-noite
 - ✅ **Detecção de ociosidade** (`GetLastInputInfo`): não alertar cadeira vazia
-- ⬜ **Escalonamento automático** de urgência
+- ✅ **Escalonamento automático** de urgência (`EscalationPolicy`): 10 min
+  ignorado ou 2 adiamentos sobem o alarme um nível, até o teto
 - ⬜ **"Você está há 3h sem levantar"** — o outro lado da detecção de presença
 - ⬜ **Pomodoro / blocos de foco** com contagem regressiva
 - ⬜ **Estatísticas**: tempo no PC, alarmes atendidos vs. adiados vs. ignorados
@@ -281,6 +282,22 @@ Decisões da parte já feita:
   onde bastam 13, desnormalizando justamente o que o desenho mantém num lugar
   só. O defeito vinha da Fase 1 e só apareceu aqui, na primeira vez que o app
   **escreveu** o arquivo em vez de só lê-lo.
+
+Decisões do escalonamento:
+
+- **O nível efetivo viaja no gatilho, não no alarme.** `AlarmTriggeredEventArgs`
+  ganhou `EffectiveUrgency`, e janela, som e política de adiamento leem dali. O
+  alarme salvo não muda; o que muda é como aquela ocorrência aparece agora.
+  Escalar até Crítico já traz junto o snooze de Crítico (1x), sem código extra.
+- **Auto-dismiss não é "agir".** Fechar por tempo virou `TimeoutClose`, separado
+  do `Dismiss` do usuário — senão o nível Normal, que some em 30s, jamais
+  escalaria. Só dispensar de fato ou o teto encerram a escalada.
+- **Adiar pausa o relógio de ignorado.** Enquanto adiado o alerta não está na
+  tela, então não conta como ignorado; o relógio recomeça quando o adiamento
+  reapresenta o alarme. Os dois gatilhos ("ignorado" e "adiado") continuam
+  independentes, como o plano pedia.
+- **Cada ocorrência recomeça do nível base.** O estado de escalada é do alerta
+  em curso, não do alarme — o de amanhã começa em Normal de novo.
 
 ---
 

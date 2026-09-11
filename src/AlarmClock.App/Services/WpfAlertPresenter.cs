@@ -55,17 +55,25 @@ public sealed class WpfAlertPresenter : IAlertPresenter
             _log.LogInformation(
                 "Alarme {Titulo} perdido e descartado conforme o nível {Nivel}.",
                 trigger.Alarm.Title,
-                trigger.Alarm.Profile.DisplayName);
+                trigger.EffectiveProfile.DisplayName);
 
             return;
         }
 
         var (modo, som) = resolvido.Value;
 
-        if (_abertos.ContainsKey(trigger.Alarm.Id))
+        if (_abertos.TryGetValue(trigger.Alarm.Id, out var existente))
         {
-            _log.LogDebug("Alerta de {Titulo} já está na tela.", trigger.Alarm.Title);
-            return;
+            if (trigger.Kind != TriggerKind.Escalation)
+            {
+                _log.LogDebug("Alerta de {Titulo} já está na tela.", trigger.Alarm.Title);
+                return;
+            }
+
+            // Escalada: troca a janela atual por uma mais intrusiva. Close()
+            // dispara Encerrar, que remove esta sessão de _abertos e para o som.
+            _log.LogInformation("Alerta de {Titulo} substituído pela versão escalada.", trigger.Alarm.Title);
+            existente.Window.Close();
         }
 
         // ToString() nos enums: sem isso o Serilog os renderiza entre aspas e o
@@ -73,7 +81,7 @@ public sealed class WpfAlertPresenter : IAlertPresenter
         _log.LogInformation(
             "Alerta: {Titulo} [{Nivel}/{Modo}] motivo={Motivo}.",
             trigger.Alarm.Title,
-            trigger.Alarm.Profile.DisplayName,
+            trigger.EffectiveProfile.DisplayName,
             modo.ToString(),
             trigger.Kind.ToString());
 
@@ -172,11 +180,11 @@ public sealed class WpfAlertPresenter : IAlertPresenter
     /// </summary>
     private static (PresentationMode Mode, SoundSpec Sound)? Resolve(AlarmTriggeredEventArgs trigger)
     {
-        var perfil = trigger.Alarm.Profile;
+        var perfil = trigger.EffectiveProfile;
 
         if (trigger.Kind != TriggerKind.Missed)
         {
-            return (perfil.Presentation, trigger.Alarm.EffectiveSound);
+            return (perfil.Presentation, trigger.EffectiveSound);
         }
 
         return perfil.WhenAway switch
@@ -187,7 +195,7 @@ public sealed class WpfAlertPresenter : IAlertPresenter
             // tela cheia com sirene, mas você precisa saber que ele existiu.
             MissedAlarmBehavior.ShowOnReturn => (PresentationMode.Corner, SoundSpec.Silent),
 
-            MissedAlarmBehavior.FireOnReturn => (perfil.Presentation, trigger.Alarm.EffectiveSound),
+            MissedAlarmBehavior.FireOnReturn => (perfil.Presentation, trigger.EffectiveSound),
 
             _ => null,
         };

@@ -25,7 +25,7 @@ public sealed partial class AlertViewModel : ObservableObject, IDisposable
         Trigger = trigger;
         Mode = mode;
 
-        var perfil = trigger.Alarm.Profile;
+        var perfil = trigger.EffectiveProfile;
 
         SnoozeOptions = [.. perfil.Snooze.Options.Select(d => new SnoozeOption(d, $"{d.TotalMinutes:0} min"))];
         DismissPhrase = perfil.DismissPhrase;
@@ -70,12 +70,17 @@ public sealed partial class AlertViewModel : ObservableObject, IDisposable
 
     public bool CanSnooze => SnoozeOptions.Count > 0;
 
-    /// <summary>Linha de contexto: na hora, adiado, ou perdido e há quanto tempo.</summary>
+    /// <summary>Linha de contexto: na hora, adiado, escalado, ou perdido.</summary>
     public string WhenText
     {
         get
         {
             var hora = Trigger.ScheduledFor.ToLocalTime().ToString("HH:mm", PtBr);
+
+            if (Trigger.Kind == TriggerKind.Escalation)
+            {
+                return $"Ignorado — subiu para {UrgencyName}";
+            }
 
             if (Trigger.Kind == TriggerKind.Snooze)
             {
@@ -115,10 +120,19 @@ public sealed partial class AlertViewModel : ObservableObject, IDisposable
         CloseRequested?.Invoke();
     }
 
+    /// <summary>
+    /// Fecha por tempo esgotado, <b>sem</b> dispensar no agendador. É o que
+    /// deixa a escalada continuar: se o auto-dismiss chamasse
+    /// <see cref="DismissCommand"/>, um alarme Normal (que some em 30s) nunca
+    /// subiria de nível. Para quem não escala, é indiferente — a ocorrência
+    /// seguinte zera tudo de qualquer forma.
+    /// </summary>
+    public void TimeoutClose() => CloseRequested?.Invoke();
+
     [RelayCommand]
     private void Snooze(SnoozeOption? option)
     {
-        var duracao = option?.Duration ?? Trigger.Alarm.Profile.Snooze.DefaultOption;
+        var duracao = option?.Duration ?? Trigger.EffectiveProfile.Snooze.DefaultOption;
 
         if (_scheduler.TrySnooze(Trigger.Alarm.Id, duracao, out var recusa))
         {

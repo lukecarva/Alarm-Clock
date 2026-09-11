@@ -128,6 +128,14 @@
         <TextBlock Style="{StaticResource Text.Caption}"
                    Text="Pula o alerta se o teclado e o mouse estiverem parados há mais de 5 minutos. Vale para o disparo na hora — alarme perdido e adiamento seguem as regras do nível." />
 
+        <TextBlock Style="{StaticResource Text.Label}" Text="INSISTÊNCIA" Margin="0,20,0,6" />
+        <ToggleButton Style="{StaticResource Chip.Toggle}"
+                      HorizontalAlignment="Left"
+                      Content="Subir de nível se eu ignorar"
+                      IsChecked="{Binding Escalate}" />
+        <TextBlock Style="{StaticResource Text.Caption}"
+                   Text="Ignorado por 10 minutos ou adiado 2 vezes, o alarme volta um nível acima — até chegar a Crítico. Dispensar de vez encerra a escalada." />
+
         <TextBlock Style="{StaticResource Text.Label}" Text="URGÊNCIA" Margin="0,20,0,6" />
         <ItemsControl ItemsSource="{Binding Urgencies}">
             <ItemsControl.ItemsPanel>

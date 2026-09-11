@@ -90,6 +90,7 @@ public sealed partial class AlarmEditorViewModel : ObservableObject
         _message = existente.Message ?? string.Empty;
         _customSoundPath = existente.CustomSoundPath ?? string.Empty;
         _skipWhenAway = existente.SkipIfIdleFor is not null;
+        _escalate = existente.Escalation is not null;
         SelectUrgency(existente.Urgency);
 
         if (existente.Schedule is IntervalSchedule intervalo)
@@ -145,6 +146,10 @@ public sealed partial class AlarmEditorViewModel : ObservableObject
     /// <summary>Não alertar se o teclado e o mouse estiverem parados.</summary>
     [ObservableProperty]
     private bool _skipWhenAway;
+
+    /// <summary>Subir de nível quando o alerta é ignorado.</summary>
+    [ObservableProperty]
+    private bool _escalate;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsOnce))]
@@ -333,6 +338,7 @@ public sealed partial class AlarmEditorViewModel : ObservableObject
             Urgency = urgencia,
             CustomSoundPath = string.IsNullOrWhiteSpace(CustomSoundPath) ? null : CustomSoundPath.Trim(),
             SkipIfIdleFor = SkipWhenAway ? IdleThreshold : null,
+            Escalation = Escalate ? EscalationPolicy.Default : null,
         };
 
         return true;

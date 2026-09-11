@@ -26,14 +26,17 @@ public partial class AlertWindow : Window
 
         viewModel.CloseRequested += Close;
 
-        var auto = viewModel.Trigger.Alarm.Profile.AutoDismissAfter;
+        var auto = viewModel.Trigger.EffectiveProfile.AutoDismissAfter;
         if (auto is not null)
         {
             _autoDismiss = new DispatcherTimer { Interval = auto.Value };
             _autoDismiss.Tick += (_, _) =>
             {
                 _autoDismiss.Stop();
-                viewModel.DismissCommand.Execute(null);
+
+                // TimeoutClose, não Dismiss: fechar por tempo não é agir. Se o
+                // alarme escala, ele volta mais alto; se não, dá no mesmo.
+                viewModel.TimeoutClose();
             };
             _autoDismiss.Start();
         }

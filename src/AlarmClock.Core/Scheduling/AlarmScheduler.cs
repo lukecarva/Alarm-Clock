@@ -53,7 +53,29 @@ public sealed class AlarmScheduler : IAlarmScheduler
     private readonly Dictionary<Guid, DateTimeOffset> _snoozes = [];
     private readonly Dictionary<Guid, int> _snoozeCounts = [];
 
+    /// <summary>Estado da escalada de cada alarme com um alerta em curso.</summary>
+    private readonly Dictionary<Guid, EscalationState> _escalations = [];
+
     private DateTimeOffset _lastTick;
+
+    /// <summary>
+    /// Escalada em andamento de um alarme. Vive enquanto o alerta não é
+    /// dispensado; some no <see cref="Dismiss"/> ou quando o alarme dispara uma
+    /// ocorrência nova (que recomeça do nível base).
+    /// </summary>
+    private sealed class EscalationState
+    {
+        public required EscalationPolicy Policy { get; init; }
+
+        /// <summary>Nível efetivo atual — sobe a cada degrau da escalada.</summary>
+        public required UrgencyLevel Level { get; set; }
+
+        /// <summary>
+        /// Quando sobe por ficar ignorado. Nulo enquanto pausado (durante um
+        /// adiamento, quando o alerta não está na tela) ou no teto.
+        /// </summary>
+        public DateTimeOffset? IgnoreDeadline { get; set; }
+    }
 
     public AlarmScheduler(ISystemClock clock, ILogger<AlarmScheduler>? log = null)
     {
@@ -101,6 +123,11 @@ public sealed class AlarmScheduler : IAlarmScheduler
                 _snoozeCounts.Remove(orfao);
             }
 
+            foreach (var orfao in _escalations.Keys.Where(id => !_alarms.ContainsKey(id)).ToList())
+            {
+                _escalations.Remove(orfao);
+            }
+
             RecomputeAll(now);
         }
     }
@@ -145,11 +172,16 @@ public sealed class AlarmScheduler : IAlarmScheduler
                 return false;
             }
 
-            var policy = alarm.Profile.Snooze;
+            // A política de adiamento segue o nível efetivo: se a escalada já
+            // levou o alarme a Crítico, vale o limite de Crítico (1x), não o do
+            // nível base.
+            var nivel = _escalations.TryGetValue(alarmId, out var esc) ? esc.Level : alarm.Urgency;
+            var perfil = UrgencyProfiles.Get(nivel);
+            var policy = perfil.Snooze;
 
             if (!policy.IsEnabled)
             {
-                refusal = $"O nível {alarm.Profile.DisplayName} não permite adiar.";
+                refusal = $"O nível {perfil.DisplayName} não permite adiar.";
                 return false;
             }
 
@@ -165,6 +197,27 @@ public sealed class AlarmScheduler : IAlarmScheduler
 
             _snoozeCounts[alarmId] = usados + 1;
             _snoozes[alarmId] = _clock.Now + delay;
+
+            if (esc is not null)
+            {
+                // Adiar tira o alerta da tela: o relógio de "ignorado" pausa e
+                // volta a correr quando o adiamento reapresentar o alarme.
+                esc.IgnoreDeadline = null;
+
+                if (esc.Policy.AfterSnoozes is { } max && usados + 1 >= max)
+                {
+                    var subido = Bump(esc.Level, esc.Policy.Ceiling);
+                    if (subido != esc.Level)
+                    {
+                        _log.LogInformation(
+                            "Alarme {Titulo} subiu para {Nivel} por adiamento.",
+                            alarm.Title,
+                            subido);
+                    }
+
+                    esc.Level = subido;
+                }
+            }
 
             _log.LogInformation(
                 "Alarme {Titulo} adiado por {Minutos} min ({Usados}/{Max}).",
@@ -184,7 +237,23 @@ public sealed class AlarmScheduler : IAlarmScheduler
         {
             _snoozes.Remove(alarmId);
             _snoozeCounts.Remove(alarmId);
+            _escalations.Remove(alarmId);
         }
+    }
+
+    /// <summary>
+    /// Sobe um nível, sem passar do teto nem de <see cref="UrgencyLevel.Critical"/>.
+    /// </summary>
+    private static UrgencyLevel Bump(UrgencyLevel level, UrgencyLevel ceiling)
+    {
+        var proximo = (UrgencyLevel)((int)level + 1);
+
+        if (proximo > ceiling)
+        {
+            proximo = ceiling;
+        }
+
+        return proximo > UrgencyLevel.Critical ? UrgencyLevel.Critical : proximo;
     }
 
     public int SnoozeCountFor(Guid alarmId)
@@ -222,15 +291,28 @@ public sealed class AlarmScheduler : IAlarmScheduler
 
             if (_alarms.TryGetValue(id, out var alarme))
             {
+                // O alerta volta à tela: o relógio de "ignorado" recomeça a partir de agora.
+                var nivel = alarme.Urgency;
+                if (_escalations.TryGetValue(id, out var esc))
+                {
+                    nivel = esc.Level;
+                    esc.IgnoreDeadline = esc.Policy.AfterIgnoredFor is { } d && esc.Level < esc.Policy.Ceiling
+                        ? now + d
+                        : null;
+                }
+
                 disparos.Add(new AlarmTriggeredEventArgs
                 {
                     Alarm = alarme,
                     ScheduledFor = quando,
                     FiredAt = now,
                     Kind = TriggerKind.Snooze,
+                    EffectiveUrgency = nivel,
                 });
             }
         }
+
+        disparos.AddRange(CollectEscalations(now));
 
         foreach (var (id, _) in _next.Where(kv => kv.Value <= now).ToList())
         {
@@ -265,8 +347,10 @@ public sealed class AlarmScheduler : IAlarmScheduler
                 _next[id] = cursor.Value;
             }
 
-            // Nova ocorrência: orçamento de adiamentos zerado.
+            // Nova ocorrência: orçamento de adiamentos zerado e escalada
+            // recomeçada do nível base.
             _snoozeCounts.Remove(id);
+            ResetEscalation(id, alarme, now);
 
             var atraso = now - vencida;
 
@@ -277,6 +361,74 @@ public sealed class AlarmScheduler : IAlarmScheduler
                 FiredAt = now,
                 Kind = atraso <= CatchUpWindow ? TriggerKind.OnTime : TriggerKind.Missed,
                 SkippedOccurrences = ocorrencias - 1,
+                EffectiveUrgency = alarme.Urgency,
+            });
+        }
+
+        return disparos;
+    }
+
+    /// <summary>Arma (ou limpa) o estado de escalada para uma ocorrência nova.</summary>
+    private void ResetEscalation(Guid id, Alarm alarme, DateTimeOffset now)
+    {
+        if (alarme.Escalation is not { } pol)
+        {
+            _escalations.Remove(id);
+            return;
+        }
+
+        _escalations[id] = new EscalationState
+        {
+            Policy = pol,
+            Level = alarme.Urgency,
+            IgnoreDeadline = pol.AfterIgnoredFor is { } d && alarme.Urgency < pol.Ceiling
+                ? now + d
+                : null,
+        };
+    }
+
+    /// <summary>
+    /// Reapresenta, um nível acima, os alarmes cujo prazo de "ignorado" venceu.
+    /// </summary>
+    private List<AlarmTriggeredEventArgs> CollectEscalations(DateTimeOffset now)
+    {
+        var disparos = new List<AlarmTriggeredEventArgs>();
+
+        var vencidos = _escalations
+            .Where(kv => kv.Value.IgnoreDeadline is { } dl && dl <= now)
+            .ToList();
+
+        foreach (var (id, esc) in vencidos)
+        {
+            if (!_alarms.TryGetValue(id, out var alarme))
+            {
+                _escalations.Remove(id);
+                continue;
+            }
+
+            var subido = Bump(esc.Level, esc.Policy.Ceiling);
+
+            if (subido == esc.Level)
+            {
+                // Já no teto: para de contar, sem reapresentar de novo à toa.
+                esc.IgnoreDeadline = null;
+                continue;
+            }
+
+            esc.Level = subido;
+            esc.IgnoreDeadline = esc.Policy.AfterIgnoredFor is { } d && subido < esc.Policy.Ceiling
+                ? now + d
+                : null;
+
+            _log.LogInformation("Alarme {Titulo} subiu para {Nivel} por ficar ignorado.", alarme.Title, subido);
+
+            disparos.Add(new AlarmTriggeredEventArgs
+            {
+                Alarm = alarme,
+                ScheduledFor = now,
+                FiredAt = now,
+                Kind = TriggerKind.Escalation,
+                EffectiveUrgency = subido,
             });
         }
 
