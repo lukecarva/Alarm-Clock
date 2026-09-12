@@ -75,9 +75,12 @@ public sealed partial class AlarmEditorViewModel : ObservableObject
 
         Urgencies = [.. UrgencyProfiles.All.Select(p => new UrgencyChoice { Profile = p })];
 
-        var agora = _clock.Now;
-        _dateText = agora.ToString("dd/MM/yyyy", PtBr);
-        _timeText = "07:00";
+        // Padrão no futuro próximo, não um "07:00" fixo: assim um alarme de uma
+        // vez já nasce depois de agora, em vez de cair na validação de "já
+        // passou". Arredondado para o próximo múltiplo de 5 min por estética.
+        var sugestao = ProximoHorarioRedondo(_clock);
+        _dateText = sugestao.ToString("dd/MM/yyyy", PtBr);
+        _timeText = sugestao.ToString("HH:mm", PtBr);
 
         if (existente is null)
         {
@@ -126,9 +129,6 @@ public sealed partial class AlarmEditorViewModel : ObservableObject
     /// <summary>"dd/MM/yyyy", só usado quando a agenda é de uma vez só.</summary>
     [ObservableProperty]
     private string _dateText;
-
-    [ObservableProperty]
-    private string? _validationError;
 
     /// <summary>Minutos entre disparos, quando a agenda é por intervalo.</summary>
     [ObservableProperty]
@@ -191,12 +191,44 @@ public sealed partial class AlarmEditorViewModel : ObservableObject
 
     public event Action<bool>? CloseRequested;
 
+    /// <summary>
+    /// Disparado quando o alarme não passa na validação. A janela mostra num
+    /// popup — o texto no rodapé passava despercebido, ainda mais com o
+    /// formulário rolado.
+    /// </summary>
+    public event Action<string>? ValidationFailed;
+
+    /// <summary>
+    /// Agora, empurrado alguns segundos para a frente e arredondado para cima ao
+    /// próximo múltiplo de 5 min. O empurrão evita nascer no passado se o minuto
+    /// já estava fechado; o arredondamento cruza a meia-noite pela própria data.
+    /// </summary>
+    private static DateTime ProximoHorarioRedondo(ISystemClock clock)
+    {
+        var agora = TimeZoneInfo.ConvertTime(clock.Now, clock.LocalTimeZone).DateTime;
+
+        var alvo = agora.AddSeconds(30);
+        alvo = alvo.AddTicks(-(alvo.Ticks % TimeSpan.TicksPerMinute)); // zera segundos
+
+        var resto = alvo.Minute % 5;
+        if (resto != 0)
+        {
+            alvo = alvo.AddMinutes(5 - resto);
+        }
+        else if (alvo <= agora)
+        {
+            alvo = alvo.AddMinutes(5);
+        }
+
+        return alvo;
+    }
+
     [RelayCommand]
     private void Save()
     {
         if (!TryBuild(out var alarme, out var erro))
         {
-            ValidationError = erro;
+            ValidationFailed?.Invoke(erro ?? "Não foi possível salvar o alarme.");
             return;
         }
 

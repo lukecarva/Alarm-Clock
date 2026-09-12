@@ -19,5 +19,13 @@ public partial class AlarmEditorWindow : Window
             DialogResult = confirmado;
             Close();
         };
+
+        viewModel.ValidationFailed += mensagem =>
+            MessageBox.Show(
+                this,
+                mensagem,
+                "Despertador Produtivo",
+                MessageBoxButton.OK,
+                MessageBoxImage.Warning);
     }
 }

@@ -182,12 +182,6 @@
                    Margin="0,6,0,0"
                    Text="Vazio usa o toque interno do app." />
 
-        <TextBlock Style="{StaticResource Text.Caption}"
-                   Margin="0,16,0,0"
-                   Foreground="{StaticResource Brush.Accent}"
-                   Text="{Binding ValidationError}"
-                   Visibility="{Binding ValidationError, Converter={StaticResource NullToVis}}" />
-
         </StackPanel>
         </ScrollViewer>
 
