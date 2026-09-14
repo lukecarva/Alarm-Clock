@@ -42,7 +42,8 @@ Name: "desktopicon"; Description: "Criar um atalho na área de trabalho"; Flags:
 Name: "startup"; Description: "Iniciar o Despertador junto com o Windows"; Flags: unchecked
 
 [Files]
-; O publish é um único .exe self-contained (traz o .NET junto).
+; O publish é um único .exe enxuto que usa o .NET 8 Desktop Runtime da máquina
+; (a presença dele é checada em InitializeSetup, abaixo).
 Source: "publish\{#AppExe}"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
@@ -69,3 +70,48 @@ Filename: "{cmd}"; Parameters: "/C taskkill /IM {#AppExe} /F"; Flags: runhidden;
 ; Remove a pasta do produto (o exe já sai sozinho); dados do usuário em
 ; %APPDATA%\AlarmClock são preservados de propósito.
 Type: dirifempty; Name: "{app}"
+
+[Code]
+{ O build é framework-dependent: sem o .NET 8 Desktop Runtime o app não abre.
+  Checamos antes de instalar e avisamos com o link, em vez de deixar o usuário
+  esbarrar num erro seco ao dar duplo-clique depois. }
+function Net8DesktopInstalado(): Boolean;
+var
+  Base: String;
+  Rec: TFindRec;
+begin
+  Result := False;
+  Base := ExpandConstant('{commonpf64}\dotnet\shared\Microsoft.WindowsDesktop.App');
+  if not DirExists(Base) then
+    exit;
+
+  if FindFirst(Base + '\8.*', Rec) then
+  try
+    repeat
+      if (Rec.Attributes and FILE_ATTRIBUTE_DIRECTORY) <> 0 then
+      begin
+        Result := True;
+        break;
+      end;
+    until not FindNext(Rec);
+  finally
+    FindClose(Rec);
+  end;
+end;
+
+function InitializeSetup(): Boolean;
+begin
+  Result := True;
+  if Net8DesktopInstalado() then
+    exit;
+
+  { Pergunta em vez de bloquear: se a detecção falhar num caso de borda, o
+    usuário ainda consegue seguir por conta própria. }
+  Result := MsgBox(
+    'O Despertador precisa do .NET 8 Desktop Runtime (x64), que não foi ' +
+    'encontrado nesta máquina.' + #13#10#13#10 +
+    'Baixe em: https://dotnet.microsoft.com/download/dotnet/8.0/runtime ' +
+    '(opção "Desktop Runtime").' + #13#10#13#10 +
+    'Deseja continuar a instalação mesmo assim?',
+    mbConfirmation, MB_YESNO) = IDYES;
+end;

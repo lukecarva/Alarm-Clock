@@ -3,9 +3,10 @@
   Gera o instalador do Despertador Produtivo do zero.
 
 .DESCRIPTION
-  Faz o publish self-contained (um único .exe com o .NET embutido) e o compila
-  num setup.exe com o Inno Setup. Rode da raiz do repositório ou de qualquer
-  lugar — os caminhos são resolvidos a partir da localização deste script.
+  Faz o publish framework-dependent (um único .exe enxuto, ~5 MB, que usa o
+  .NET 8 Desktop Runtime já instalado) e o compila num setup.exe com o Inno
+  Setup. Rode da raiz do repositório ou de qualquer lugar — os caminhos são
+  resolvidos a partir da localização deste script.
 
   Requer o Inno Setup 6 (winget install JRSoftware.InnoSetup). O script procura
   o ISCC.exe nos locais de instalação por usuário e por máquina.
@@ -30,14 +31,12 @@ $iss = Join-Path $buildDir 'installer.iss'
 Write-Host "==> Limpando publish anterior" -ForegroundColor Cyan
 if (Test-Path $publishDir) { Remove-Item $publishDir -Recurse -Force }
 
-Write-Host "==> Publicando self-contained ($Runtime, single-file)" -ForegroundColor Cyan
+Write-Host "==> Publicando framework-dependent ($Runtime, single-file)" -ForegroundColor Cyan
 & dotnet publish $projeto `
     -c $Configuration `
     -r $Runtime `
-    --self-contained true `
+    --self-contained false `
     -p:PublishSingleFile=true `
-    -p:IncludeNativeLibrariesForSelfExtract=true `
-    -p:EnableCompressionInSingleFile=true `
     -p:DebugType=none `
     -o $publishDir
 if ($LASTEXITCODE -ne 0) { throw "dotnet publish falhou ($LASTEXITCODE)." }

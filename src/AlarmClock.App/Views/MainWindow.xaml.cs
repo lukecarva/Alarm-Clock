@@ -6,10 +6,17 @@ namespace AlarmClock.App.Views;
 
 public partial class MainWindow : Window
 {
+    private readonly MainViewModel _viewModel;
+
     public MainWindow(MainViewModel viewModel)
     {
         InitializeComponent();
+        _viewModel = viewModel;
         DataContext = viewModel;
+
+        // A atualização periódica dos textos ("em 42 min") só roda com a janela
+        // visível — escondida na bandeja não há o que mostrar.
+        IsVisibleChanged += (_, e) => _viewModel.SetActive((bool)e.NewValue);
     }
 
     /// <summary>

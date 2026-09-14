@@ -13,7 +13,7 @@ public sealed record SnoozeOption(TimeSpan Duration, string Label);
 
 public sealed partial class AlertViewModel : ObservableObject, IDisposable
 {
-    private static readonly CultureInfo PtBr = new("pt-BR");
+    private static readonly CultureInfo PtBr = TimeFormat.PtBr;
 
     private readonly IAlarmScheduler _scheduler;
     private readonly DispatcherTimer? _relogio;

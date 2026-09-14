@@ -39,7 +39,7 @@ public sealed partial class UrgencyChoice : ObservableObject
 
 public sealed partial class AlarmEditorViewModel : ObservableObject
 {
-    private static readonly CultureInfo PtBr = new("pt-BR");
+    private static readonly CultureInfo PtBr = TimeFormat.PtBr;
 
     /// <summary>
     /// Quanto tempo de teclado e mouse parados já conta como "não estou aqui".

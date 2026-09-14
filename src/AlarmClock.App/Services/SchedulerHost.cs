@@ -1,4 +1,3 @@
-using System.Globalization;
 using System.Windows;
 using System.Windows.Threading;
 using AlarmClock.Core.Abstractions;
@@ -15,8 +14,6 @@ namespace AlarmClock.App.Services;
 /// </summary>
 public sealed class SchedulerHost : IHostedService, IDisposable
 {
-    private static readonly CultureInfo PtBr = new("pt-BR");
-
     private readonly IAlarmScheduler _scheduler;
     private readonly AlarmsService _alarms;
     private readonly IAlertPresenter _presenter;
@@ -103,21 +100,9 @@ public sealed class SchedulerHost : IHostedService, IDisposable
     {
         var proxima = _scheduler.NextFireTime;
 
-        string texto;
-
-        if (proxima is null)
-        {
-            texto = "Despertador Produtivo — nenhum alarme ativo";
-        }
-        else
-        {
-            var falta = proxima.Value - _clock.Now;
-            var local = TimeZoneInfo.ConvertTime(proxima.Value, _clock.LocalTimeZone);
-
-            texto = falta < TimeSpan.FromHours(1)
-                ? $"Próximo alarme em {Math.Max(1, (int)falta.TotalMinutes)} min"
-                : $"Próximo: {local.ToString("dd/MM 'às' HH:mm", PtBr)}";
-        }
+        var texto = proxima is null
+            ? "Despertador Produtivo — nenhum alarme ativo"
+            : $"Próximo alarme {TimeFormat.Relative(proxima.Value, _clock)}";
 
         if (texto == _ultimoStatus)
         {

@@ -29,6 +29,20 @@
     <Version>0.1.0</Version>
   </PropertyGroup>
 
+  <!-- Ajustes de peso em execução. Um utilitário de bandeja quer o menor
+       working set possível, não vazão máxima. -->
+  <PropertyGroup>
+    <!-- GC de estação, não de servidor: um heap só, sem uma thread de GC por
+         núcleo. Para um app pequeno e sempre aberto, é bem menos memória. -->
+    <ServerGarbageCollection>false</ServerGarbageCollection>
+    <!-- Sem GC concorrente: dispensa a thread de background e o heap extra que
+         ela reserva. As pausas de GC são irrelevantes num despertador. -->
+    <ConcurrentGarbageCollection>false</ConcurrentGarbageCollection>
+    <!-- Devolve memória ao SO em vez de segurar para reuso — troca um pouco de
+         velocidade de realocação por um working set menor em repouso. -->
+    <RetainVMGarbageCollection>false</RetainVMGarbageCollection>
+  </PropertyGroup>
+
   <ItemGroup>
     <!-- Precisa ser Resource (e não só ApplicationIcon) para o pack:// URI do
          ícone da bandeja resolver em tempo de execução. -->

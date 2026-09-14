@@ -1,6 +1,5 @@
 using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.Globalization;
 using System.Reflection;
 using System.Windows.Threading;
 using AlarmClock.App.Services;
@@ -14,8 +13,6 @@ namespace AlarmClock.App.ViewModels;
 
 public sealed partial class MainViewModel : ObservableObject
 {
-    private static readonly CultureInfo PtBr = new("pt-BR");
-
     private readonly AlarmsService _alarms;
     private readonly IAlarmScheduler _scheduler;
     private readonly AlarmDialogs _dialogs;
@@ -46,9 +43,27 @@ public sealed partial class MainViewModel : ObservableObject
         Rebuild();
 
         // Os textos são relativos ("em 42 min"), então envelhecem sozinhos.
+        // Fica parado enquanto a janela está escondida na bandeja — não há o que
+        // atualizar sem ninguém olhando, e é um wake-up a menos a cada 20s.
         _refresh = new DispatcherTimer { Interval = TimeSpan.FromSeconds(20) };
         _refresh.Tick += (_, _) => RefreshRelativeTexts();
-        _refresh.Start();
+    }
+
+    /// <summary>
+    /// Liga/desliga a atualização periódica conforme a janela aparece ou some.
+    /// Chamado pela <c>MainWindow</c> em <c>IsVisibleChanged</c>.
+    /// </summary>
+    public void SetActive(bool active)
+    {
+        if (active)
+        {
+            RefreshRelativeTexts();
+            _refresh.Start();
+        }
+        else
+        {
+            _refresh.Stop();
+        }
     }
 
     public ObservableCollection<AlarmRowViewModel> Alarms { get; } = [];
@@ -151,11 +166,6 @@ public sealed partial class MainViewModel : ObservableObject
             return HasAlarms ? "Nenhum alarme ativo" : "Nenhum alarme configurado";
         }
 
-        var falta = proxima.Value - _clock.Now;
-        var local = TimeZoneInfo.ConvertTime(proxima.Value, _clock.LocalTimeZone);
-
-        return falta < TimeSpan.FromHours(1)
-            ? $"Próximo alarme em {Math.Max(1, (int)falta.TotalMinutes)} min"
-            : $"Próximo alarme: {local.ToString("dd/MM 'às' HH:mm", PtBr)}";
+        return $"Próximo alarme {TimeFormat.Relative(proxima.Value, _clock)}";
     }
 }

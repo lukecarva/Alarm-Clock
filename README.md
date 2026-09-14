@@ -33,7 +33,7 @@ O que falta está no [plano](docs/PLANO.md#fase-2--em-andamento).
 
 ## Instalando
 
-Gere o instalador (setup.exe por usuário, sem admin, com o .NET embutido):
+Gere o instalador (setup.exe enxuto — ~3 MB — por usuário, sem admin):
 
 ```bash
 pwsh build/build-installer.ps1
@@ -44,7 +44,13 @@ Sai em `build/dist/DespertadorProdutivo-Setup-<versão>.exe`. Ele instala em
 oferece "iniciar com o Windows" e atalho na área de trabalho como opcionais. A
 desinstalação preserva seus dados em `%APPDATA%\AlarmClock`.
 
-Requer o [Inno Setup 6](https://jrsoftware.org/isinfo.php) uma única vez:
+O build é *framework-dependent*: exige o **.NET 8 Desktop Runtime (x64)** na
+máquina. O instalador detecta a ausência dele e mostra o link antes de seguir.
+Baixe em <https://dotnet.microsoft.com/download/dotnet/8.0/runtime> (opção
+"Desktop Runtime") — ou `winget install Microsoft.DotNet.DesktopRuntime.8`.
+
+Gerar o instalador requer o [Inno Setup 6](https://jrsoftware.org/isinfo.php)
+uma única vez:
 
 ```bash
 winget install JRSoftware.InnoSetup
