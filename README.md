@@ -20,7 +20,8 @@ frente do computador.
   volta um nível acima, até Crítico. É o "mata-ignorância".
 - **Agendas flexíveis** — uma vez, todo dia, dias da semana, ou a cada N minutos
   (com faixa de horário opcional, que pode atravessar a meia-noite).
-- **Lembretes de saúde** — cíclicos, com detecção de ausência: não empilha
+- **Aba "Dia a dia"** — lembretes de saúde num clique (água, levantar, olhos,
+  alongar), quietos à noite e pulados quando você está ausente: não empilha
   avisos numa cadeira vazia.
 - **Resistente a hibernação** — compara o relógio de parede a cada segundo, faz
   *catch-up* de alarmes perdidos e reage a mudanças de fuso e de relógio.

@@ -27,6 +27,13 @@ public sealed record Alarm
     public bool IsEnabled { get; init; } = true;
 
     /// <summary>
+    /// Marca um lembrete de "dia a dia" (água, levantar, olhos…) e diz qual.
+    /// Nulo = alarme comum, criado pelo usuário. É o que separa as duas abas:
+    /// a lista de alarmes esconde quem tem chave; a aba de hábitos cuida deles.
+    /// </summary>
+    public string? HabitKey { get; init; }
+
+    /// <summary>
     /// Pula o alerta se o teclado e o mouse estiverem parados há pelo menos este
     /// tempo. Nulo = alerta sempre.
     /// </summary>

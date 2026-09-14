@@ -255,6 +255,9 @@ acordar depois da hora e o alarme disparar com o resumo do atraso.
 
 - ✅ **Lembretes cíclicos** (`IntervalSchedule`): "a cada 45 min", com faixa de
   horário opcional que pode atravessar a meia-noite
+- ✅ **Aba "Dia a dia"**: presets de saúde num clique (água, levantar, olhos,
+  alongar), cada um um alarme por intervalo marcado com `HabitKey`, com faixa
+  08:00–22:00 e pulo por ausência embutidos
 - ✅ **Detecção de ociosidade** (`GetLastInputInfo`): não alertar cadeira vazia
 - ✅ **Escalonamento automático** de urgência (`EscalationPolicy`): 10 min
   ignorado ou 2 adiamentos sobem o alarme um nível, até o teto

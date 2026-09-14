@@ -3,8 +3,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:loc="clr-namespace:AlarmClock.App.Localization"
         Title="{loc:Loc App_Name}"
-        Height="620" Width="760"
-        MinHeight="480" MinWidth="620"
+        Height="640" Width="760"
+        MinHeight="500" MinWidth="620"
         WindowStartupLocation="CenterScreen"
         Background="{StaticResource Brush.Bg}"
         TextOptions.TextRenderingMode="ClearType">
@@ -17,115 +17,195 @@
         </Grid.RowDefinitions>
 
         <!-- Cabeçalho -->
-        <Grid Grid.Row="0" Margin="0,0,0,18">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
+        <StackPanel Grid.Row="0" Margin="0,0,0,18">
+            <TextBlock Style="{StaticResource Text.Title}" Text="{loc:Loc App_Name}" />
+            <TextBlock Style="{StaticResource Text.Caption}" Margin="0,4,0,0" Text="{Binding NextAlarmSummary}" />
+        </StackPanel>
 
-            <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                <TextBlock Style="{StaticResource Text.Title}" Text="{loc:Loc App_Name}" />
-                <TextBlock Style="{StaticResource Text.Caption}" Margin="0,4,0,0" Text="{Binding NextAlarmSummary}" />
-            </StackPanel>
+        <!-- Abas -->
+        <TabControl Grid.Row="1" Style="{StaticResource Tabs}">
 
-            <Button Grid.Column="1"
-                    Style="{StaticResource Button.Primary}"
-                    VerticalAlignment="Center"
-                    Content="{loc:Loc Main_NewAlarm}"
-                    Command="{Binding NewAlarmCommand}" />
-        </Grid>
+            <!-- ===================== ALARMES ===================== -->
+            <TabItem Style="{StaticResource Tab}" Header="{loc:Loc Tab_Alarms}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
 
-        <!-- Lista -->
-        <ScrollViewer Grid.Row="1"
-                      VerticalScrollBarVisibility="Auto"
-                      Visibility="{Binding HasAlarms, Converter={StaticResource BoolToVis}}">
-            <ItemsControl ItemsSource="{Binding Alarms}">
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <Border Style="{StaticResource Card}" Padding="16" Margin="0,0,0,10">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
+                    <Button Grid.Row="0"
+                            Style="{StaticResource Button.Primary}"
+                            HorizontalAlignment="Right"
+                            Margin="0,0,0,12"
+                            Content="{loc:Loc Main_NewAlarm}"
+                            Command="{Binding NewAlarmCommand}" />
 
-                                <!-- Barra da cor da urgência -->
-                                <Rectangle Grid.Column="0"
-                                           Width="3"
-                                           RadiusX="2" RadiusY="2"
-                                           Fill="{Binding AccentBrush}"
-                                           Margin="0,0,14,0" />
+                    <ScrollViewer Grid.Row="1"
+                                  VerticalScrollBarVisibility="Auto"
+                                  Visibility="{Binding HasAlarms, Converter={StaticResource BoolToVis}}">
+                        <ItemsControl ItemsSource="{Binding Alarms}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Style="{StaticResource Card}" Padding="16" Margin="0,0,0,10">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
 
-                                <ToggleButton Grid.Column="1"
-                                              Style="{StaticResource Chip.Toggle}"
-                                              VerticalAlignment="Center"
-                                              Margin="0,0,14,0"
-                                              MinWidth="52"
-                                              Content="{loc:Loc Row_On}"
-                                              IsChecked="{Binding IsEnabled}" />
+                                            <Rectangle Grid.Column="0"
+                                                       Width="3"
+                                                       RadiusX="2" RadiusY="2"
+                                                       Fill="{Binding AccentBrush}"
+                                                       Margin="0,0,14,0" />
 
-                                <StackPanel Grid.Column="2" VerticalAlignment="Center">
-                                    <TextBlock Style="{StaticResource Text.Body}"
-                                               FontSize="14.5"
-                                               FontWeight="SemiBold"
-                                               Text="{Binding Title}" />
-                                    <StackPanel Orientation="Horizontal" Margin="0,3,0,0">
-                                        <TextBlock Style="{StaticResource Text.Caption}" Text="{Binding ScheduleText}" />
-                                        <TextBlock Style="{StaticResource Text.Caption}" Text="  ·  " />
-                                        <TextBlock Style="{StaticResource Text.Caption}" Text="{Binding UrgencyName}" />
-                                        <TextBlock Style="{StaticResource Text.Caption}" Text="  ·  " />
-                                        <TextBlock Style="{StaticResource Text.Caption}"
-                                                   Foreground="{Binding AccentBrush}"
-                                                   Text="{Binding NextText}" />
-                                    </StackPanel>
-                                </StackPanel>
+                                            <ToggleButton Grid.Column="1"
+                                                          Style="{StaticResource Chip.Toggle}"
+                                                          VerticalAlignment="Center"
+                                                          Margin="0,0,14,0"
+                                                          MinWidth="52"
+                                                          Content="{loc:Loc Row_On}"
+                                                          IsChecked="{Binding IsEnabled}" />
 
-                                <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
-                                    <Button Style="{StaticResource Button.Ghost}"
-                                            Content="{loc:Loc Row_Edit}"
-                                            Margin="0,0,6,0"
-                                            Command="{Binding DataContext.EditCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                            CommandParameter="{Binding}" />
-                                    <Button Style="{StaticResource Button.Ghost}"
-                                            Content="{loc:Loc Row_Delete}"
-                                            Command="{Binding DataContext.DeleteCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                            CommandParameter="{Binding}" />
-                                </StackPanel>
-                            </Grid>
-                        </Border>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-        </ScrollViewer>
+                                            <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                                                <TextBlock Style="{StaticResource Text.Body}"
+                                                           FontSize="14.5"
+                                                           FontWeight="SemiBold"
+                                                           Text="{Binding Title}" />
+                                                <StackPanel Orientation="Horizontal" Margin="0,3,0,0">
+                                                    <TextBlock Style="{StaticResource Text.Caption}" Text="{Binding ScheduleText}" />
+                                                    <TextBlock Style="{StaticResource Text.Caption}" Text="  ·  " />
+                                                    <TextBlock Style="{StaticResource Text.Caption}" Text="{Binding UrgencyName}" />
+                                                    <TextBlock Style="{StaticResource Text.Caption}" Text="  ·  " />
+                                                    <TextBlock Style="{StaticResource Text.Caption}"
+                                                               Foreground="{Binding AccentBrush}"
+                                                               Text="{Binding NextText}" />
+                                                </StackPanel>
+                                            </StackPanel>
 
-        <!-- Estado vazio -->
-        <Border Grid.Row="1">
-            <Border.Style>
-                <Style TargetType="Border" BasedOn="{StaticResource Card}">
-                    <Setter Property="Visibility" Value="Collapsed" />
-                    <Style.Triggers>
-                        <DataTrigger Binding="{Binding HasAlarms}" Value="False">
-                            <Setter Property="Visibility" Value="Visible" />
-                        </DataTrigger>
-                    </Style.Triggers>
-                </Style>
-            </Border.Style>
-            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" MaxWidth="430">
-                <Ellipse Width="52" Height="52" Fill="{StaticResource Brush.Accent}" Opacity="0.16"
-                         HorizontalAlignment="Center" />
-                <TextBlock Style="{StaticResource Text.Body}"
-                           Margin="0,18,0,0" FontSize="15" FontWeight="SemiBold" TextAlignment="Center"
-                           Text="{loc:Loc Main_EmptyTitle}" />
-                <TextBlock Style="{StaticResource Text.Caption}"
-                           Margin="0,8,0,0" TextAlignment="Center"
-                           Text="{loc:Loc Main_EmptyBody}" />
-                <TextBlock Style="{StaticResource Text.Caption}"
-                           Margin="0,14,0,0" TextAlignment="Center"
-                           Text="{loc:Loc Main_EmptyTray}" />
-            </StackPanel>
-        </Border>
+                                            <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
+                                                <Button Style="{StaticResource Button.Ghost}"
+                                                        Content="{loc:Loc Row_Edit}"
+                                                        Margin="0,0,6,0"
+                                                        Command="{Binding DataContext.EditCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                        CommandParameter="{Binding}" />
+                                                <Button Style="{StaticResource Button.Ghost}"
+                                                        Content="{loc:Loc Row_Delete}"
+                                                        Command="{Binding DataContext.DeleteCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                        CommandParameter="{Binding}" />
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+
+                    <!-- Estado vazio -->
+                    <Border Grid.Row="1">
+                        <Border.Style>
+                            <Style TargetType="Border" BasedOn="{StaticResource Card}">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding HasAlarms}" Value="False">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" MaxWidth="430">
+                            <Ellipse Width="52" Height="52" Fill="{StaticResource Brush.Accent}" Opacity="0.16"
+                                     HorizontalAlignment="Center" />
+                            <TextBlock Style="{StaticResource Text.Body}"
+                                       Margin="0,18,0,0" FontSize="15" FontWeight="SemiBold" TextAlignment="Center"
+                                       Text="{loc:Loc Main_EmptyTitle}" />
+                            <TextBlock Style="{StaticResource Text.Caption}"
+                                       Margin="0,8,0,0" TextAlignment="Center"
+                                       Text="{loc:Loc Main_EmptyBody}" />
+                            <TextBlock Style="{StaticResource Text.Caption}"
+                                       Margin="0,14,0,0" TextAlignment="Center"
+                                       Text="{loc:Loc Main_EmptyTray}" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </TabItem>
+
+            <!-- ===================== DIA A DIA ===================== -->
+            <TabItem Style="{StaticResource Tab}" Header="{loc:Loc Tab_Habits}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0"
+                               Style="{StaticResource Text.Caption}"
+                               Margin="0,0,0,12"
+                               Text="{loc:Loc Habits_Intro}" />
+
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                        <ItemsControl ItemsSource="{Binding Habits}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Style="{StaticResource Card}" Padding="16" Margin="0,0,0,10">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+
+                                            <TextBlock Grid.Column="0"
+                                                       Text="{Binding Emoji}"
+                                                       FontSize="22"
+                                                       VerticalAlignment="Center"
+                                                       Margin="0,0,14,0" />
+
+                                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                <TextBlock Style="{StaticResource Text.Body}"
+                                                           FontSize="14.5"
+                                                           FontWeight="SemiBold"
+                                                           Text="{Binding Name}" />
+                                                <TextBlock Style="{StaticResource Text.Caption}"
+                                                           Margin="0,3,0,0"
+                                                           Text="{Binding Note}" />
+                                            </StackPanel>
+
+                                            <StackPanel Grid.Column="2"
+                                                        Orientation="Horizontal"
+                                                        VerticalAlignment="Center"
+                                                        Margin="0,0,14,0">
+                                                <TextBlock Style="{StaticResource Text.Caption}"
+                                                           VerticalAlignment="Center"
+                                                           Text="{loc:Loc Habits_Every}" />
+                                                <TextBox Style="{StaticResource Field.Text}"
+                                                         Width="54"
+                                                         Margin="8,0"
+                                                         TextAlignment="Center"
+                                                         Text="{Binding IntervalText, UpdateSourceTrigger=PropertyChanged}" />
+                                                <TextBlock Style="{StaticResource Text.Caption}"
+                                                           VerticalAlignment="Center"
+                                                           Text="{loc:Loc Habits_Minutes}" />
+                                            </StackPanel>
+
+                                            <ToggleButton Grid.Column="3"
+                                                          Style="{StaticResource Chip.Toggle}"
+                                                          VerticalAlignment="Center"
+                                                          MinWidth="52"
+                                                          Content="{loc:Loc Row_On}"
+                                                          IsChecked="{Binding IsActive}" />
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Grid>
+            </TabItem>
+        </TabControl>
 
         <!-- Rodapé -->
         <StackPanel Grid.Row="2" Margin="0,18,0,0">

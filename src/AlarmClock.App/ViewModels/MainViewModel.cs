@@ -5,6 +5,7 @@ using System.Windows.Threading;
 using AlarmClock.App.Services;
 using AlarmClock.Core.Abstractions;
 using AlarmClock.Core.Localization;
+using AlarmClock.Core.Model;
 using AlarmClock.Core.Scheduling;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -71,6 +72,8 @@ public sealed partial class MainViewModel : ObservableObject
     }
 
     public ObservableCollection<AlarmRowViewModel> Alarms { get; } = [];
+
+    public ObservableCollection<HabitRowViewModel> Habits { get; } = [];
 
     public string VersionText { get; }
 
@@ -141,14 +144,57 @@ public sealed partial class MainViewModel : ObservableObject
     {
         Alarms.Clear();
 
-        foreach (var alarme in _alarms.Items.OrderBy(a => a.Title, StringComparer.CurrentCultureIgnoreCase))
+        // A lista de alarmes esconde os hábitos: eles têm a aba "dia a dia".
+        var comuns = _alarms.Items
+            .Where(a => a.HabitKey is null)
+            .OrderBy(a => a.Title, StringComparer.CurrentCultureIgnoreCase);
+
+        foreach (var alarme in comuns)
         {
             var id = alarme.Id;
             Alarms.Add(new AlarmRowViewModel(alarme, _clock, ligado => _alarms.SetEnabled(id, ligado)));
         }
 
+        RebuildHabits();
+
         OnPropertyChanged(nameof(HasAlarms));
         RefreshRelativeTexts();
+    }
+
+    private void RebuildHabits()
+    {
+        Habits.Clear();
+
+        foreach (var def in HabitCatalog.All)
+        {
+            var existente = _alarms.Items.FirstOrDefault(a => a.HabitKey == def.Key);
+            Habits.Add(new HabitRowViewModel(def, existente, ToggleHabit, SetHabitInterval));
+        }
+    }
+
+    private void ToggleHabit(HabitDefinition def, bool active, int minutes)
+    {
+        var existente = _alarms.Items.FirstOrDefault(a => a.HabitKey == def.Key);
+
+        if (active)
+        {
+            _alarms.AddOrUpdate(HabitCatalog.BuildAlarm(def, minutes, _clock.Now, existente));
+            _log.LogInformation("Hábito {Habito} ativado (a cada {Min} min).", def.Key, minutes);
+        }
+        else if (existente is not null)
+        {
+            _alarms.Remove(existente.Id);
+            _log.LogInformation("Hábito {Habito} desativado.", def.Key);
+        }
+    }
+
+    private void SetHabitInterval(HabitDefinition def, int minutes)
+    {
+        var existente = _alarms.Items.FirstOrDefault(a => a.HabitKey == def.Key);
+        if (existente is not null)
+        {
+            _alarms.AddOrUpdate(HabitCatalog.BuildAlarm(def, minutes, _clock.Now, existente));
+        }
     }
 
     private void RefreshRelativeTexts()
