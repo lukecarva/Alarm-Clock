@@ -1,0 +1,38 @@
+# EditorConfig — estilo de código do projeto. https://editorconfig.org
+root = true
+
+[*]
+charset = utf-8
+end_of_line = crlf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+
+[*.{json,xml,yml,yaml,csproj,props,targets}]
+indent_size = 2
+
+[*.md]
+trim_trailing_whitespace = false
+
+[*.cs]
+# Organização de usings
+dotnet_sort_system_directives_first = true
+dotnet_separate_import_directive_groups = false
+
+# Preferências de C# moderno usadas neste projeto
+csharp_style_namespace_declarations = file_scoped:warning
+csharp_style_prefer_primary_constructors = true:suggestion
+csharp_prefer_braces = true:warning
+csharp_style_expression_bodied_methods = when_on_single_line:suggestion
+dotnet_style_prefer_collection_expression = true:suggestion
+dotnet_style_readonly_field = true:warning
+
+# CA1822 (marcar membro como static) fica como sugestão: alguns membros são
+# alvos de data binding do WPF, que exige propriedade de instância.
+dotnet_diagnostic.CA1822.severity = suggestion
+
+# SYSLIB1054 (trocar DllImport por LibraryImport) desligado de propósito:
+# LibraryImport exige AllowUnsafeBlocks no projeto, e não habilitamos unsafe
+# por causa de três P/Invoke triviais.
+dotnet_diagnostic.SYSLIB1054.severity = none

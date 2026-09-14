@@ -13,19 +13,13 @@ namespace AlarmClock.App.Services;
 /// o ícone é que fica. Construído em C# em vez de XAML de propósito — são três
 /// itens de menu, e assim não há surpresa de DataContext não propagado.
 /// </summary>
-public sealed class TrayIconService : IDisposable
+public sealed class TrayIconService(IServiceProvider services, ILogger<TrayIconService> log) : IDisposable
 {
-    private readonly IServiceProvider _services;
-    private readonly ILogger<TrayIconService> _log;
+    private readonly IServiceProvider _services = services;
+    private readonly ILogger<TrayIconService> _log = log;
 
     private TaskbarIcon? _icon;
     private bool _disposed;
-
-    public TrayIconService(IServiceProvider services, ILogger<TrayIconService> log)
-    {
-        _services = services;
-        _log = log;
-    }
 
     public void Show()
     {

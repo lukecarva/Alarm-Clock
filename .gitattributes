@@ -1,2 +1,18 @@
-# Auto detect text files and perform LF normalization
+# Normaliza texto para LF no repositório; o checkout no Windows usa CRLF.
 * text=auto
+
+# Fontes e config sempre como texto.
+*.cs        text diff=csharp
+*.xaml      text
+*.csproj    text
+*.props     text
+*.iss       text
+*.md        text
+*.json      text
+*.ps1       text eol=crlf
+
+# Binários: nunca normalizar.
+*.ico       binary
+*.png       binary
+*.jpg       binary
+*.wav       binary

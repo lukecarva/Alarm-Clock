@@ -26,6 +26,8 @@ public class JsonAlarmStoreTests : IDisposable
         {
             // Limpeza best-effort: um arquivo preso não pode derrubar o teste.
         }
+
+        GC.SuppressFinalize(this);
     }
 
     [Fact]

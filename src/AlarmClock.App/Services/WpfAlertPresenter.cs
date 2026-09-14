@@ -13,27 +13,19 @@ namespace AlarmClock.App.Services;
 /// <summary>
 /// Escolhe e monta a janela do alerta a partir do perfil de urgência.
 /// </summary>
-public sealed class WpfAlertPresenter : IAlertPresenter
+public sealed class WpfAlertPresenter(
+    IAlarmScheduler scheduler,
+    TrayIconService tray,
+    IIdleDetector idle,
+    ILogger<WpfAlertPresenter> log) : IAlertPresenter
 {
-    private readonly IAlarmScheduler _scheduler;
-    private readonly TrayIconService _tray;
-    private readonly IIdleDetector _idle;
-    private readonly ILogger<WpfAlertPresenter> _log;
+    private readonly IAlarmScheduler _scheduler = scheduler;
+    private readonly TrayIconService _tray = tray;
+    private readonly IIdleDetector _idle = idle;
+    private readonly ILogger<WpfAlertPresenter> _log = log;
 
     /// <summary>Alertas na tela, por alarme. Impede dois alertas do mesmo alarme.</summary>
     private readonly Dictionary<Guid, AlertSession> _abertos = [];
-
-    public WpfAlertPresenter(
-        IAlarmScheduler scheduler,
-        TrayIconService tray,
-        IIdleDetector idle,
-        ILogger<WpfAlertPresenter> log)
-    {
-        _scheduler = scheduler;
-        _tray = tray;
-        _idle = idle;
-        _log = log;
-    }
 
     public void Show(AlarmTriggeredEventArgs trigger)
     {

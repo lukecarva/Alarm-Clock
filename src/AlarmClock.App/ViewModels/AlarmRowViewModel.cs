@@ -12,7 +12,9 @@ public sealed partial class AlarmRowViewModel : ObservableObject
     private readonly ISystemClock _clock;
     private readonly Action<bool> _onToggled;
 
-    private bool _suprimirCallback;
+    // readonly: só muda dentro do construtor (guarda o callback durante a carga
+    // inicial de IsEnabled). C# permite reatribuir readonly no próprio ctor.
+    private readonly bool _suprimirCallback;
 
     public AlarmRowViewModel(Alarm alarm, ISystemClock clock, Action<bool> onToggled)
     {

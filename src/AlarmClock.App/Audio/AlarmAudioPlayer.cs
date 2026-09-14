@@ -10,15 +10,13 @@ namespace AlarmClock.App.Audio;
 /// Toca o som de um alerta. Uma instância por alerta na tela — dois alarmes
 /// simultâneos tocam em paralelo, cada um com seu volume e seu fade.
 /// </summary>
-public sealed class AlarmAudioPlayer : IDisposable
+public sealed class AlarmAudioPlayer(ILogger log) : IDisposable
 {
-    private readonly ILogger _log;
+    private readonly ILogger _log = log;
 
     private WaveOutEvent? _output;
     private AudioFileReader? _reader;
     private bool _disposed;
-
-    public AlarmAudioPlayer(ILogger log) => _log = log;
 
     public void Play(SoundSpec spec)
     {

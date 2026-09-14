@@ -16,6 +16,8 @@ public sealed class Win32IdleDetector : IIdleDetector
         public uint dwTime;
     }
 
+    // DllImport, não LibraryImport: este último exige AllowUnsafeBlocks no
+    // projeto inteiro, e não vale habilitar unsafe por três P/Invoke triviais.
     [DllImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool GetLastInputInfo(ref LastInputInfo info);

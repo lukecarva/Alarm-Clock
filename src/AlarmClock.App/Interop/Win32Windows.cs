@@ -22,6 +22,8 @@ internal static class Win32Windows
 
     private static readonly IntPtr HwndTopmost = new(-1);
 
+    // DllImport, não LibraryImport: este último exige AllowUnsafeBlocks no
+    // projeto inteiro, e não vale habilitar unsafe por três P/Invoke triviais.
     [DllImport("user32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool SetWindowPos(

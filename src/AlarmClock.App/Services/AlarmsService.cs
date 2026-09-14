@@ -8,18 +8,12 @@ namespace AlarmClock.App.Services;
 /// Dona da lista de alarmes. Toda alteração persiste na hora e avisa quem
 /// depende — não existe "salvar" manual para o usuário esquecer de clicar.
 /// </summary>
-public sealed class AlarmsService
+public sealed class AlarmsService(IAlarmStore store, ILogger<AlarmsService> log)
 {
-    private readonly IAlarmStore _store;
-    private readonly ILogger<AlarmsService> _log;
+    private readonly IAlarmStore _store = store;
+    private readonly ILogger<AlarmsService> _log = log;
 
     private List<Alarm> _items = [];
-
-    public AlarmsService(IAlarmStore store, ILogger<AlarmsService> log)
-    {
-        _store = store;
-        _log = log;
-    }
 
     public IReadOnlyList<Alarm> Items => _items;
 

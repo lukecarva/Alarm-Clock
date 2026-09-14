@@ -7,11 +7,9 @@ namespace AlarmClock.App.Audio;
 /// um buraco audível entre as voltas — aqui a emenda acontece dentro do mesmo
 /// buffer.
 /// </summary>
-public sealed class LoopingSampleProvider : ISampleProvider
+public sealed class LoopingSampleProvider(AudioFileReader reader) : ISampleProvider
 {
-    private readonly AudioFileReader _reader;
-
-    public LoopingSampleProvider(AudioFileReader reader) => _reader = reader;
+    private readonly AudioFileReader _reader = reader;
 
     public WaveFormat WaveFormat => _reader.WaveFormat;
 

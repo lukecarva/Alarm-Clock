@@ -12,34 +12,24 @@ namespace AlarmClock.App.Services;
 /// Liga o agendador ao mundo real: o tique de um segundo e os eventos do
 /// Windows que invalidam qualquer conta de tempo feita antes deles.
 /// </summary>
-public sealed class SchedulerHost : IHostedService, IDisposable
+public sealed class SchedulerHost(
+    IAlarmScheduler scheduler,
+    AlarmsService alarms,
+    IAlertPresenter presenter,
+    TrayIconService tray,
+    ISystemClock clock,
+    ILogger<SchedulerHost> log) : IHostedService, IDisposable
 {
-    private readonly IAlarmScheduler _scheduler;
-    private readonly AlarmsService _alarms;
-    private readonly IAlertPresenter _presenter;
-    private readonly TrayIconService _tray;
-    private readonly ISystemClock _clock;
-    private readonly ILogger<SchedulerHost> _log;
+    private readonly IAlarmScheduler _scheduler = scheduler;
+    private readonly AlarmsService _alarms = alarms;
+    private readonly IAlertPresenter _presenter = presenter;
+    private readonly TrayIconService _tray = tray;
+    private readonly ISystemClock _clock = clock;
+    private readonly ILogger<SchedulerHost> _log = log;
 
     private DispatcherTimer? _timer;
     private bool _hooked;
     private string? _ultimoStatus;
-
-    public SchedulerHost(
-        IAlarmScheduler scheduler,
-        AlarmsService alarms,
-        IAlertPresenter presenter,
-        TrayIconService tray,
-        ISystemClock clock,
-        ILogger<SchedulerHost> log)
-    {
-        _scheduler = scheduler;
-        _alarms = alarms;
-        _presenter = presenter;
-        _tray = tray;
-        _clock = clock;
-        _log = log;
-    }
 
     public Task StartAsync(CancellationToken cancellationToken)
     {

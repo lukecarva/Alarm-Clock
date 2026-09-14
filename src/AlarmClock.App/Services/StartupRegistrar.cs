@@ -8,14 +8,12 @@ namespace AlarmClock.App.Services;
 /// Iniciar com o Windows. Usa HKCU, que não pede elevação — um despertador
 /// pessoal não tem por que pedir permissão de administrador.
 /// </summary>
-public sealed class StartupRegistrar
+public sealed class StartupRegistrar(ILogger<StartupRegistrar> log)
 {
     private const string RunKey = @"Software\Microsoft\Windows\CurrentVersion\Run";
     private const string ValueName = "DespertadorProdutivo";
 
-    private readonly ILogger<StartupRegistrar> _log;
-
-    public StartupRegistrar(ILogger<StartupRegistrar> log) => _log = log;
+    private readonly ILogger<StartupRegistrar> _log = log;
 
     public bool IsEnabled
     {
