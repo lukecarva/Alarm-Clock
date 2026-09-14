@@ -41,7 +41,6 @@ public sealed partial class MainViewModel : ObservableObject
 
         var version = Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "0.0.0";
         VersionText = Loc.Format("Main_Version", version);
-        DataFolderText = Loc.Format("Main_DataFolder", AppPaths.Root);
 
         _startWithWindows = _startup.IsEnabled;
 
@@ -75,9 +74,6 @@ public sealed partial class MainViewModel : ObservableObject
 
     /// <summary>Footer version text. | Texto de versão do rodapé.</summary>
     public string VersionText { get; }
-
-    /// <summary>Footer data-folder text. | Texto da pasta de dados no rodapé.</summary>
-    public string DataFolderText { get; }
 
     /// <summary>Whether there are any user alarms. | Se há algum alarme do usuário.</summary>
     public bool HasAlarms => Alarms.Count > 0;

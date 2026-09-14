@@ -139,7 +139,6 @@ public static class Loc
         ["Main_EmptyTray"] = "Closing this window doesn't quit the app. It stays in the tray.",
         ["Main_StartWithWindows"] = "Start with Windows",
         ["Main_OpenDataFolder"] = "Open data folder",
-        ["Main_DataFolder"] = "Data and logs: {0}",
         ["Main_Version"] = "version {0}",
 
         ["Editor_New"] = "New alarm",
@@ -275,7 +274,6 @@ public static class Loc
         ["Main_EmptyTray"] = "Fechar esta janela não encerra o app. Ele continua na bandeja.",
         ["Main_StartWithWindows"] = "Iniciar com o Windows",
         ["Main_OpenDataFolder"] = "Abrir pasta de dados",
-        ["Main_DataFolder"] = "Dados e logs: {0}",
         ["Main_Version"] = "versão {0}",
 
         ["Editor_New"] = "Novo alarme",
