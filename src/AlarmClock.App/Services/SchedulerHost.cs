@@ -1,7 +1,9 @@
+using System.IO;
 using System.Windows;
 using System.Windows.Threading;
 using AlarmClock.Core.Abstractions;
 using AlarmClock.Core.Localization;
+using AlarmClock.Core.Persistence;
 using AlarmClock.Core.Scheduling;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -17,6 +19,7 @@ namespace AlarmClock.App.Services;
 public sealed class SchedulerHost(
     IAlarmScheduler scheduler,
     AlarmsService alarms,
+    ISchedulerStateStore stateStore,
     IAlertPresenter presenter,
     TrayIconService tray,
     ISystemClock clock,
@@ -24,6 +27,7 @@ public sealed class SchedulerHost(
 {
     private readonly IAlarmScheduler _scheduler = scheduler;
     private readonly AlarmsService _alarms = alarms;
+    private readonly ISchedulerStateStore _stateStore = stateStore;
     private readonly IAlertPresenter _presenter = presenter;
     private readonly TrayIconService _tray = tray;
     private readonly ISystemClock _clock = clock;
@@ -41,6 +45,12 @@ public sealed class SchedulerHost(
         _alarms.Load();
         _alarms.Changed += OnAlarmsChanged;
         _scheduler.Reload(_alarms.Items);
+
+        // Restore snoozes/escalations after Reload (which needs the alarms loaded),
+        // then persist on every later change. | Restaura adiamentos/escaladas após o Reload (que precisa dos alarmes carregados)
+        // e, a partir daí, persiste a cada mudança.
+        _scheduler.RestoreState(_stateStore.Load());
+        _scheduler.StateChanged += OnStateChanged;
 
         // One-second tick: cheap, and immune to hibernation. | Tique de um segundo: barato, e imune a hibernação.
         _timer = new DispatcherTimer(DispatcherPriority.Normal, Application.Current.Dispatcher)
@@ -87,6 +97,19 @@ public sealed class SchedulerHost(
     private void OnTriggered(object? sender, AlarmTriggeredEventArgs e)
     {
         _presenter.Show(e);
+    }
+
+    /// <summary>Persists the scheduler state; a disk error must not crash the app. | Persiste o estado do agendador; um erro de disco não pode derrubar o app.</summary>
+    private void OnStateChanged(object? sender, EventArgs e)
+    {
+        try
+        {
+            _stateStore.Save(_scheduler.CaptureState());
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            _log.LogError(ex, "Não deu para salvar o estado do agendador.");
+        }
     }
 
     /// <summary>Updates the tray tooltip only when the text actually changes. | Atualiza o tooltip da bandeja só quando o texto muda de verdade.</summary>
@@ -140,6 +163,7 @@ public sealed class SchedulerHost(
         SystemEvents.TimeChanged -= OnTimeChanged;
         _alarms.Changed -= OnAlarmsChanged;
         _scheduler.Triggered -= OnTriggered;
+        _scheduler.StateChanged -= OnStateChanged;
         _hooked = false;
     }
 

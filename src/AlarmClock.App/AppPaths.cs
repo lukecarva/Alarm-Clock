@@ -22,6 +22,9 @@ public static class AppPaths
     /// <summary>Path of the settings file. | Caminho do arquivo de preferências.</summary>
     public static string SettingsFile => Path.Combine(Root, "settings.json");
 
+    /// <summary>Path of the scheduler runtime-state file (snoozes and escalations). | Caminho do arquivo de estado de execução do agendador (adiamentos e escaladas).</summary>
+    public static string SchedulerStateFile => Path.Combine(Root, "scheduler-state.json");
+
     /// <summary>Creates the data and log folders if missing. | Cria as pastas de dados e de log se não existirem.</summary>
     public static void EnsureCreated()
     {

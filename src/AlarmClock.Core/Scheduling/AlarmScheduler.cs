@@ -12,6 +12,9 @@ public interface IAlarmScheduler
     /// <summary>Raised when an alarm fires. | Emitido quando um alarme dispara.</summary>
     event EventHandler<AlarmTriggeredEventArgs>? Triggered;
 
+    /// <summary>Raised when the snooze/escalation state changes and should be persisted. | Emitido quando o estado de adiamento/escalada muda e deve ser persistido.</summary>
+    event EventHandler? StateChanged;
+
     /// <summary>Next expected firing, snoozes included. Null = nothing scheduled. | Próximo disparo previsto, adiamentos incluídos. Nulo = nada agendado.</summary>
     DateTimeOffset? NextFireTime { get; }
 
@@ -29,6 +32,12 @@ public interface IAlarmScheduler
 
     /// <summary>How many times the alarm has been snoozed. | Quantas vezes o alarme foi adiado.</summary>
     int SnoozeCountFor(Guid alarmId);
+
+    /// <summary>Snapshots the current snooze/escalation state for persistence. | Tira um retrato do estado atual de adiamento/escalada para persistência.</summary>
+    SchedulerState CaptureState();
+
+    /// <summary>Restores a saved state; must be called after <see cref="Reload"/>. | Restaura um estado salvo; deve ser chamado após <see cref="Reload"/>.</summary>
+    void RestoreState(SchedulerState state);
 }
 
 /// <summary>
@@ -80,6 +89,27 @@ public sealed class AlarmScheduler : IAlarmScheduler
 
     public event EventHandler<AlarmTriggeredEventArgs>? Triggered;
 
+    public event EventHandler? StateChanged;
+
+    /// <summary>Set under the lock whenever persistent state changes; drained after the lock. | Marcado sob o lock sempre que o estado persistido muda; drenado após o lock.</summary>
+    private bool _stateDirty;
+
+    /// <summary>Raises <see cref="StateChanged"/> once if state changed since the last drain. | Emite <see cref="StateChanged"/> uma vez se o estado mudou desde a última drenagem.</summary>
+    private void RaiseStateChangedIfDirty()
+    {
+        bool mudou;
+        lock (_gate)
+        {
+            mudou = _stateDirty;
+            _stateDirty = false;
+        }
+
+        if (mudou)
+        {
+            StateChanged?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
     public DateTimeOffset? NextFireTime
     {
         get
@@ -108,20 +138,25 @@ public sealed class AlarmScheduler : IAlarmScheduler
             foreach (var orfao in _snoozes.Keys.Where(id => !_alarms.ContainsKey(id)).ToList())
             {
                 _snoozes.Remove(orfao);
+                _stateDirty = true;
             }
 
             foreach (var orfao in _snoozeCounts.Keys.Where(id => !_alarms.ContainsKey(id)).ToList())
             {
                 _snoozeCounts.Remove(orfao);
+                _stateDirty = true;
             }
 
             foreach (var orfao in _escalations.Keys.Where(id => !_alarms.ContainsKey(id)).ToList())
             {
                 _escalations.Remove(orfao);
+                _stateDirty = true;
             }
 
             RecomputeAll(now);
         }
+
+        RaiseStateChangedIfDirty();
     }
 
     public void Tick()
@@ -151,82 +186,108 @@ public sealed class AlarmScheduler : IAlarmScheduler
         {
             Triggered?.Invoke(this, disparo);
         }
+
+        RaiseStateChangedIfDirty();
     }
 
     public bool TrySnooze(Guid alarmId, TimeSpan delay, out string? refusal)
     {
+        bool sucesso;
+
         lock (_gate)
         {
-            if (!_alarms.TryGetValue(alarmId, out var alarm))
-            {
-                refusal = Loc.Get("Snooze_NotFound");
-                return false;
-            }
-
-            // Snooze policy follows the effective (possibly escalated) level. | A política de adiamento segue o nível efetivo (possivelmente escalado).
-            var nivel = _escalations.TryGetValue(alarmId, out var esc) ? esc.Level : alarm.Urgency;
-            var perfil = UrgencyProfiles.Get(nivel);
-            var policy = perfil.Snooze;
-
-            if (!policy.IsEnabled)
-            {
-                refusal = Loc.Format("Snooze_NotAllowed", Loc.UrgencyName(nivel));
-                return false;
-            }
-
-            var usados = _snoozeCounts.GetValueOrDefault(alarmId);
-            if (usados >= policy.MaxCount)
-            {
-                refusal = policy.MaxCount == 1
-                    ? Loc.Get("Snooze_Once")
-                    : Loc.Format("Snooze_Max", policy.MaxCount);
-
-                return false;
-            }
-
-            _snoozeCounts[alarmId] = usados + 1;
-            _snoozes[alarmId] = _clock.Now + delay;
-
-            if (esc is not null)
-            {
-                // Snoozing hides the alert, so the "ignored" clock pauses. | Adiar tira o alerta da tela, então o relógio de "ignorado" pausa.
-                esc.IgnoreDeadline = null;
-
-                if (esc.Policy.AfterSnoozes is { } max && usados + 1 >= max)
-                {
-                    var subido = Bump(esc.Level, esc.Policy.Ceiling);
-                    if (subido != esc.Level)
-                    {
-                        _log.LogInformation(
-                            "Alarme {Titulo} subiu para {Nivel} por adiamento.",
-                            alarm.Title,
-                            subido);
-                    }
-
-                    esc.Level = subido;
-                }
-            }
-
-            _log.LogInformation(
-                "Alarme {Titulo} adiado por {Minutos} min ({Usados}/{Max}).",
-                alarm.Title,
-                delay.TotalMinutes,
-                usados + 1,
-                policy.MaxCount);
-
-            refusal = null;
-            return true;
+            sucesso = TrySnoozeLocked(alarmId, delay, out refusal);
         }
+
+        // Persist outside the lock so the handler's disk write doesn't block ticks. | Persiste fora do lock para a gravação em disco do handler não travar os tiques.
+        if (sucesso)
+        {
+            RaiseStateChangedIfDirty();
+        }
+
+        return sucesso;
+    }
+
+    /// <summary>Snooze logic, run under the lock. | Lógica do adiamento, executada sob o lock.</summary>
+    private bool TrySnoozeLocked(Guid alarmId, TimeSpan delay, out string? refusal)
+    {
+        if (!_alarms.TryGetValue(alarmId, out var alarm))
+        {
+            refusal = Loc.Get("Snooze_NotFound");
+            return false;
+        }
+
+        // Snooze policy follows the effective (possibly escalated) level. | A política de adiamento segue o nível efetivo (possivelmente escalado).
+        var nivel = _escalations.TryGetValue(alarmId, out var esc) ? esc.Level : alarm.Urgency;
+        var perfil = UrgencyProfiles.Get(nivel);
+        var policy = perfil.Snooze;
+
+        if (!policy.IsEnabled)
+        {
+            refusal = Loc.Format("Snooze_NotAllowed", Loc.UrgencyName(nivel));
+            return false;
+        }
+
+        var usados = _snoozeCounts.GetValueOrDefault(alarmId);
+        if (usados >= policy.MaxCount)
+        {
+            refusal = policy.MaxCount == 1
+                ? Loc.Get("Snooze_Once")
+                : Loc.Format("Snooze_Max", policy.MaxCount);
+
+            return false;
+        }
+
+        _snoozeCounts[alarmId] = usados + 1;
+        _snoozes[alarmId] = _clock.Now + delay;
+        _stateDirty = true;
+
+        if (esc is not null)
+        {
+            // Snoozing hides the alert, so the "ignored" clock pauses. | Adiar tira o alerta da tela, então o relógio de "ignorado" pausa.
+            esc.IgnoreDeadline = null;
+
+            if (esc.Policy.AfterSnoozes is { } max && usados + 1 >= max)
+            {
+                var subido = Bump(esc.Level, esc.Policy.Ceiling);
+                if (subido != esc.Level)
+                {
+                    _log.LogInformation(
+                        "Alarme {Titulo} subiu para {Nivel} por adiamento.",
+                        alarm.Title,
+                        subido);
+                }
+
+                esc.Level = subido;
+            }
+        }
+
+        _log.LogInformation(
+            "Alarme {Titulo} adiado por {Minutos} min ({Usados}/{Max}).",
+            alarm.Title,
+            delay.TotalMinutes,
+            usados + 1,
+            policy.MaxCount);
+
+        refusal = null;
+        return true;
     }
 
     public void Dismiss(Guid alarmId)
     {
         lock (_gate)
         {
-            _snoozes.Remove(alarmId);
-            _snoozeCounts.Remove(alarmId);
-            _escalations.Remove(alarmId);
+            var removeu = _snoozes.Remove(alarmId);
+            removeu |= _snoozeCounts.Remove(alarmId);
+            removeu |= _escalations.Remove(alarmId);
+
+            if (removeu)
+            {
+                _stateDirty = true;
+            }
         }
+
+        RaiseStateChangedIfDirty();
     }
 
     /// <summary>Rises one level, capped at the ceiling and Critical. | Sobe um nível, limitado pelo teto e por Crítico.</summary>
@@ -247,6 +308,68 @@ public sealed class AlarmScheduler : IAlarmScheduler
         lock (_gate)
         {
             return _snoozeCounts.GetValueOrDefault(alarmId);
+        }
+    }
+
+    public SchedulerState CaptureState()
+    {
+        lock (_gate)
+        {
+            var ids = _snoozeCounts.Keys.Union(_snoozes.Keys);
+
+            var snoozes = ids
+                .Select(id => new SnoozeState(
+                    id,
+                    _snoozeCounts.GetValueOrDefault(id),
+                    _snoozes.TryGetValue(id, out var quando) ? quando : null))
+                .ToList();
+
+            var escalations = _escalations
+                .Select(kv => new EscalationSnapshot(kv.Key, kv.Value.Level, kv.Value.IgnoreDeadline))
+                .ToList();
+
+            return new SchedulerState { Snoozes = snoozes, Escalations = escalations };
+        }
+    }
+
+    public void RestoreState(SchedulerState state)
+    {
+        lock (_gate)
+        {
+            foreach (var s in state.Snoozes)
+            {
+                // Skip state for alarms that no longer exist. | Ignora o estado de alarmes que não existem mais.
+                if (!_alarms.ContainsKey(s.AlarmId))
+                {
+                    continue;
+                }
+
+                if (s.Count > 0)
+                {
+                    _snoozeCounts[s.AlarmId] = s.Count;
+                }
+
+                if (s.DueAt is { } quando)
+                {
+                    _snoozes[s.AlarmId] = quando;
+                }
+            }
+
+            foreach (var e in state.Escalations)
+            {
+                // Re-attach the policy from the alarm; drop it if the alarm or its policy is gone. | Reanexa a política a partir do alarme; descarta se o alarme ou a política sumiu.
+                if (!_alarms.TryGetValue(e.AlarmId, out var alarme) || alarme.Escalation is not { } pol)
+                {
+                    continue;
+                }
+
+                _escalations[e.AlarmId] = new EscalationState
+                {
+                    Policy = pol,
+                    Level = e.Level,
+                    IgnoreDeadline = e.IgnoreDeadline,
+                };
+            }
         }
     }
 
@@ -276,6 +399,7 @@ public sealed class AlarmScheduler : IAlarmScheduler
         foreach (var (id, quando) in _snoozes.Where(kv => kv.Value <= now).ToList())
         {
             _snoozes.Remove(id);
+            _stateDirty = true;
 
             if (_alarms.TryGetValue(id, out var alarme))
             {
@@ -336,6 +460,7 @@ public sealed class AlarmScheduler : IAlarmScheduler
             // New occurrence: reset the snooze budget and restart escalation. | Nova ocorrência: zera o orçamento de adiamentos e reinicia a escalada.
             _snoozeCounts.Remove(id);
             ResetEscalation(id, alarme, now);
+            _stateDirty = true;
 
             var atraso = now - vencida;
 
@@ -380,6 +505,12 @@ public sealed class AlarmScheduler : IAlarmScheduler
         var vencidos = _escalations
             .Where(kv => kv.Value.IgnoreDeadline is { } dl && dl <= now)
             .ToList();
+
+        // Every branch below mutates escalation state, so persist afterwards. | Todo ramo abaixo altera o estado de escalada, então persiste depois.
+        if (vencidos.Count > 0)
+        {
+            _stateDirty = true;
+        }
 
         foreach (var (id, esc) in vencidos)
         {

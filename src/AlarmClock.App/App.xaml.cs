@@ -63,6 +63,9 @@ public partial class App : Application
                 services.AddSingleton<IAlarmStore>(sp => new JsonAlarmStore(
                     AppPaths.AlarmsFile,
                     sp.GetRequiredService<ILogger<JsonAlarmStore>>()));
+                services.AddSingleton<ISchedulerStateStore>(sp => new JsonSchedulerStateStore(
+                    AppPaths.SchedulerStateFile,
+                    sp.GetRequiredService<ILogger<JsonSchedulerStateStore>>()));
 
                 services.AddSingleton<IAlarmScheduler, AlarmScheduler>();
                 services.AddSingleton<IAlertPresenter, WpfAlertPresenter>();
