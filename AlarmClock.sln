@@ -13,6 +13,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{77344E86
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AlarmClock.Core.Tests", "tests\AlarmClock.Core.Tests\AlarmClock.Core.Tests.csproj", "{9933BA85-802B-4400-860A-939D59D78D8B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AlarmClock.App.Tests", "tests\AlarmClock.App.Tests\AlarmClock.App.Tests.csproj", "{76578F9C-9C74-4CB7-BF77-556F2F946695}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -34,10 +36,15 @@ Global
 		{9933BA85-802B-4400-860A-939D59D78D8B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9933BA85-802B-4400-860A-939D59D78D8B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9933BA85-802B-4400-860A-939D59D78D8B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{76578F9C-9C74-4CB7-BF77-556F2F946695}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{76578F9C-9C74-4CB7-BF77-556F2F946695}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{76578F9C-9C74-4CB7-BF77-556F2F946695}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{76578F9C-9C74-4CB7-BF77-556F2F946695}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{4265AAE2-6265-4CC1-ADDE-F8921182E2CE} = {241B9943-B573-406E-A8D5-D0819214C796}
 		{FCFEE520-1495-4CC8-8137-85D5798CC2E7} = {241B9943-B573-406E-A8D5-D0819214C796}
 		{9933BA85-802B-4400-860A-939D59D78D8B} = {77344E86-7792-4C55-BE67-053B8A7D69D6}
+		{76578F9C-9C74-4CB7-BF77-556F2F946695} = {77344E86-7792-4C55-BE67-053B8A7D69D6}
 	EndGlobalSection
 EndGlobal

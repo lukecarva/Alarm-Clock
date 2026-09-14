@@ -26,7 +26,7 @@ public sealed partial class AlarmRowViewModel : ObservableObject
         IsEnabled = alarm.IsEnabled;
         _suprimirCallback = false;
 
-        AccentBrush = Application.Current.TryFindResource($"Brush.Urgency.{alarm.Urgency}") as Brush
+        AccentBrush = Application.Current?.TryFindResource($"Brush.Urgency.{alarm.Urgency}") as Brush
                       ?? Brushes.Gray;
     }
 

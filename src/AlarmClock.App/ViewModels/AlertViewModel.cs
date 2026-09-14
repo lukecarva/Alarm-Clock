@@ -32,7 +32,7 @@ public sealed partial class AlertViewModel : ObservableObject, IDisposable
         DismissMode = perfil.Dismiss;
         UrgencyName = Loc.UrgencyName(perfil.Level);
 
-        AccentBrush = Application.Current.TryFindResource($"Brush.Urgency.{perfil.Level}") as Brush
+        AccentBrush = Application.Current?.TryFindResource($"Brush.Urgency.{perfil.Level}") as Brush
                       ?? Brushes.OrangeRed;
 
         if (mode == PresentationMode.Fullscreen)
