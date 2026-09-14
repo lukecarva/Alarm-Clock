@@ -122,7 +122,7 @@
                            Text="Crie o primeiro e escolha o nível de urgência. Sussurro é um toast silencioso; Crítico cobre a tela inteira e só sai com uma ação deliberada." />
                 <TextBlock Style="{StaticResource Text.Caption}"
                            Margin="0,14,0,0" TextAlignment="Center"
-                           Text="Fechar esta janela não encerra o app — ele continua na bandeja." />
+                           Text="Fechar esta janela não encerra o app. Ele continua na bandeja." />
             </StackPanel>
         </Border>
 

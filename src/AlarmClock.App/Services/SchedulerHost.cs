@@ -91,7 +91,7 @@ public sealed class SchedulerHost(
         var proxima = _scheduler.NextFireTime;
 
         var texto = proxima is null
-            ? "Despertador Produtivo — nenhum alarme ativo"
+            ? "Despertador Produtivo, nenhum alarme ativo"
             : $"Próximo alarme {TimeFormat.Relative(proxima.Value, _clock)}";
 
         if (texto == _ultimoStatus)

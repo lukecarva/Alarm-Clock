@@ -175,6 +175,6 @@ public class IntervalScheduleTests
             new TimeOnly(9, 0),
             new TimeOnly(18, 0));
 
-        Assert.Equal("A cada 45 min, 09:00–18:00", agenda.Describe());
+        Assert.Equal("A cada 45 min, 09:00 às 18:00", agenda.Describe());
     }
 }

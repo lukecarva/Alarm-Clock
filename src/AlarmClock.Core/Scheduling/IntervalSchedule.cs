@@ -119,7 +119,7 @@ public sealed record IntervalSchedule(
         var texto = $"A cada {FormatEvery()}";
 
         return HasWindow
-            ? $"{texto}, {ActiveFrom:HH\\:mm}–{ActiveTo:HH\\:mm}"
+            ? $"{texto}, {ActiveFrom:HH\\:mm} às {ActiveTo:HH\\:mm}"
             : texto;
     }
 

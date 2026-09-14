@@ -79,7 +79,7 @@ public sealed partial class AlertViewModel : ObservableObject, IDisposable
 
             if (Trigger.Kind == TriggerKind.Escalation)
             {
-                return $"Ignorado — subiu para {UrgencyName}";
+                return $"Ignorado, subiu para {UrgencyName}";
             }
 
             if (Trigger.Kind == TriggerKind.Snooze)
