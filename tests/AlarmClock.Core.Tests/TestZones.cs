@@ -1,25 +1,9 @@
 namespace AlarmClock.Core.Tests;
 
-/// <summary>
-/// Fusos construídos à mão. Usar "E. South America Standard Time" de verdade
-/// seria pior: o Windows não carrega regras históricas de forma confiável, o
-/// Brasil não tem mais horário de verão desde 2019, e o teste passaria a
-/// depender da base de fusos da máquina. Aqui a regra é explícita e o resultado
-/// é o mesmo na sua máquina e no CI.
-/// </summary>
+/// <summary>Hand-built time zones with explicit rules, for deterministic DST tests. | Fusos construídos à mão com regras explícitas, para testes de DST determinísticos.</summary>
 public static class TestZones
 {
-    /// <summary>
-    /// Hemisfério sul: padrão −03:00, com +1h de horário de verão entre
-    /// 15/out e 15/fev.
-    /// </summary>
-    /// <remarks>
-    /// Consequências que os testes exploram:
-    /// <list type="bullet">
-    /// <item>15/out, 00:00–00:59 <b>não existe</b> (o relógio pula para 01:00).</item>
-    /// <item>14/fev, 23:00–23:59 <b>acontece duas vezes</b> (o relógio volta).</item>
-    /// </list>
-    /// </remarks>
+    /// <summary>Southern-hemisphere zone: −03:00, +1h DST between Oct 15 and Feb 15. | Fuso do hemisfério sul: −03:00, +1h de horário de verão entre 15/out e 15/fev.</summary>
     public static TimeZoneInfo SouthernDst { get; } = BuildSouthernDst();
 
     private static TimeZoneInfo BuildSouthernDst()

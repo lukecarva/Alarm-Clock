@@ -7,14 +7,13 @@ using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace AlarmClock.App.ViewModels;
 
-/// <summary>Uma linha da lista de alarmes.</summary>
+/// <summary>One row of the alarm list. | Uma linha da lista de alarmes.</summary>
 public sealed partial class AlarmRowViewModel : ObservableObject
 {
     private readonly ISystemClock _clock;
     private readonly Action<bool> _onToggled;
 
-    // readonly: só muda dentro do construtor (guarda o callback durante a carga
-    // inicial de IsEnabled). C# permite reatribuir readonly no próprio ctor.
+    // Guards the toggle callback during the initial load of IsEnabled. | Protege o callback do toggle durante a carga inicial de IsEnabled.
     private readonly bool _suprimirCallback;
 
     public AlarmRowViewModel(Alarm alarm, ISystemClock clock, Action<bool> onToggled)
@@ -31,16 +30,22 @@ public sealed partial class AlarmRowViewModel : ObservableObject
                       ?? Brushes.Gray;
     }
 
+    /// <summary>The underlying alarm. | O alarme por trás da linha.</summary>
     public Alarm Alarm { get; }
 
+    /// <summary>Alarm title. | Título do alarme.</summary>
     public string Title => Alarm.Title;
 
+    /// <summary>Schedule description. | Descrição da agenda.</summary>
     public string ScheduleText => Alarm.Schedule.Describe();
 
+    /// <summary>Localized urgency name. | Nome localizado da urgência.</summary>
     public string UrgencyName => Loc.UrgencyName(Alarm.Urgency);
 
+    /// <summary>Color of the urgency accent. | Cor de destaque da urgência.</summary>
     public Brush AccentBrush { get; }
 
+    /// <summary>Whether the alarm is enabled. | Se o alarme está ligado.</summary>
     [ObservableProperty]
     private bool _isEnabled;
 
@@ -52,6 +57,7 @@ public sealed partial class AlarmRowViewModel : ObservableObject
         }
     }
 
+    /// <summary>Relative text of the next occurrence, or off/none. | Texto relativo da próxima ocorrência, ou desligado/nenhuma.</summary>
     public string NextText
     {
         get
@@ -69,6 +75,6 @@ public sealed partial class AlarmRowViewModel : ObservableObject
         }
     }
 
-    /// <summary>Recalcula os textos relativos ("em 42 min") sem recriar a linha.</summary>
+    /// <summary>Re-reads the relative texts without recreating the row. | Recalcula os textos relativos sem recriar a linha.</summary>
     public void RefreshNext() => OnPropertyChanged(nameof(NextText));
 }

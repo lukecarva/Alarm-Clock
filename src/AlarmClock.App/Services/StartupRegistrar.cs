@@ -4,10 +4,7 @@ using Microsoft.Win32;
 
 namespace AlarmClock.App.Services;
 
-/// <summary>
-/// Iniciar com o Windows. Usa HKCU, que não pede elevação — um despertador
-/// pessoal não tem por que pedir permissão de administrador.
-/// </summary>
+/// <summary>Registers/unregisters "start with Windows" under HKCU (no admin). | Registra/remove o "iniciar com o Windows" em HKCU (sem admin).</summary>
 public sealed class StartupRegistrar(ILogger<StartupRegistrar> log)
 {
     private const string RunKey = @"Software\Microsoft\Windows\CurrentVersion\Run";
@@ -15,6 +12,7 @@ public sealed class StartupRegistrar(ILogger<StartupRegistrar> log)
 
     private readonly ILogger<StartupRegistrar> _log = log;
 
+    /// <summary>Whether start-with-Windows is currently set. | Se o início com o Windows está ativo.</summary>
     public bool IsEnabled
     {
         get
@@ -24,6 +22,7 @@ public sealed class StartupRegistrar(ILogger<StartupRegistrar> log)
         }
     }
 
+    /// <summary>Turns start-with-Windows on or off. | Liga ou desliga o início com o Windows.</summary>
     public void SetEnabled(bool enabled)
     {
         using var key = Registry.CurrentUser.OpenSubKey(RunKey, writable: true);
@@ -42,8 +41,7 @@ public sealed class StartupRegistrar(ILogger<StartupRegistrar> log)
                 return;
             }
 
-            // --minimized: subir direto para a bandeja, sem jogar a janela na
-            // cara de quem acabou de ligar o PC.
+            // --minimized: start straight to the tray. | --minimized: sobe direto para a bandeja.
             key.SetValue(ValueName, $"\"{caminho}\" --minimized");
             _log.LogInformation("Início automático ligado.");
         }
@@ -54,10 +52,7 @@ public sealed class StartupRegistrar(ILogger<StartupRegistrar> log)
         }
     }
 
-    private static string? ExecutablePath()
-    {
-        // Environment.ProcessPath aponta para o .exe real, inclusive quando o
-        // app é publicado single-file — Assembly.Location viria vazio nesse caso.
-        return Environment.ProcessPath ?? Process.GetCurrentProcess().MainModule?.FileName;
-    }
+    /// <summary>Path of the running executable. | Caminho do executável em execução.</summary>
+    private static string? ExecutablePath() =>
+        Environment.ProcessPath ?? Process.GetCurrentProcess().MainModule?.FileName;
 }

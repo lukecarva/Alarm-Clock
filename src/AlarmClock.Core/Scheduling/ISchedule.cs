@@ -2,10 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace AlarmClock.Core.Scheduling;
 
-/// <summary>
-/// Dias da semana como flags. <see cref="DayOfWeek"/> não é combinável, e um
-/// alarme "seg/qua/sex" precisa ser um valor só para caber no JSON.
-/// </summary>
+/// <summary>Days of the week as combinable flags. | Dias da semana como flags combináveis.</summary>
 [Flags]
 public enum WeekDays
 {
@@ -25,15 +22,14 @@ public enum WeekDays
 
 public static class WeekDaysExtensions
 {
+    /// <summary>Converts a day into its flag. | Converte um dia na sua flag.</summary>
     public static WeekDays ToFlag(this DayOfWeek day) => (WeekDays)(1 << (int)day);
 
+    /// <summary>Whether the set contains the given day. | Se o conjunto contém o dia informado.</summary>
     public static bool Includes(this WeekDays days, DayOfWeek day) => (days & day.ToFlag()) != 0;
 }
 
-/// <summary>
-/// Uma regra de recorrência. Toda a complexidade de calendário do projeto mora
-/// atrás desta única pergunta — o agendador não sabe o que é "toda terça".
-/// </summary>
+/// <summary>A recurrence rule for an alarm. | Uma regra de recorrência de um alarme.</summary>
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "$type")]
 [JsonDerivedType(typeof(OneTimeSchedule), "once")]
 [JsonDerivedType(typeof(DailySchedule), "daily")]
@@ -42,16 +38,11 @@ public static class WeekDaysExtensions
 public interface ISchedule
 {
     /// <summary>
-    /// Próxima ocorrência estritamente depois de <paramref name="from"/>, ou
-    /// nulo se não houver mais nenhuma.
+    /// Next occurrence strictly after <paramref name="from"/>, or null if none. | Próxima ocorrência estritamente depois de <paramref name="from"/>, ou nulo se não houver.
     /// </summary>
-    /// <param name="zone">
-    /// Necessário porque agendas recorrentes guardam hora de parede, não
-    /// instante absoluto: "todo dia às 7h" continua sendo 7h depois que entra
-    /// o horário de verão.
-    /// </param>
+    /// <param name="zone">Local time zone, used to resolve wall-clock recurrences and DST. | Fuso local, usado para resolver recorrências em hora de parede e o horário de verão.</param>
     DateTimeOffset? NextOccurrenceAfter(DateTimeOffset from, TimeZoneInfo zone);
 
-    /// <summary>Texto curto para a lista de alarmes. "Todo dia, 07:00".</summary>
+    /// <summary>Short text for the alarm list, e.g. "Every day, 07:00". | Texto curto para a lista, ex.: "Todo dia, 07:00".</summary>
     string Describe();
 }

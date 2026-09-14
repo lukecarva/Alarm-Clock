@@ -3,10 +3,9 @@ using Microsoft.Extensions.Hosting;
 namespace AlarmClock.App.Services;
 
 /// <summary>
-/// Substitui o <c>ConsoleLifetime</c> padrão do host genérico. Num app WPF de
-/// bandeja quem manda no ciclo de vida é a classe <see cref="App"/>: o host não
-/// deve tentar encerrar o processo por conta própria nem prender handlers de
-/// Ctrl+C num console inexistente.
+/// No-op host lifetime for a WPF tray app; the <see cref="App"/> class owns the
+/// process lifecycle. | Ciclo de vida vazio para um app WPF de bandeja; quem controla o processo é a
+/// classe <see cref="App"/>.
 /// </summary>
 public sealed class WpfHostLifetime : IHostLifetime
 {

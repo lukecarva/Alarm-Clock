@@ -6,9 +6,10 @@ using AlarmClock.Core.Model;
 
 namespace AlarmClock.App.Views;
 
+/// <summary>Alert window: corner card, modal, or full-screen overlay. | Janela de alerta: card no canto, modal, ou overlay de tela cheia.</summary>
 public partial class AlertWindow : Window
 {
-    /// <summary>Quanto tempo o botão do nível Crítico precisa ficar pressionado.</summary>
+    /// <summary>How long the hold-to-dismiss button must be pressed. | Quanto tempo o botão de segurar precisa ficar pressionado.</summary>
     private static readonly TimeSpan HoldDuration = TimeSpan.FromSeconds(3);
 
     private readonly AlertViewModel _viewModel;
@@ -34,8 +35,7 @@ public partial class AlertWindow : Window
             {
                 _autoDismiss.Stop();
 
-                // TimeoutClose, não Dismiss: fechar por tempo não é agir. Se o
-                // alarme escala, ele volta mais alto; se não, dá no mesmo.
+                // Timeout closes without dismissing, so escalation can continue. | Tempo esgotado fecha sem dispensar, para a escalada poder continuar.
                 viewModel.TimeoutClose();
             };
             _autoDismiss.Start();
@@ -53,10 +53,9 @@ public partial class AlertWindow : Window
         Loaded += OnLoaded;
     }
 
+    /// <summary>Activates the window (except the corner card, which keeps focus). | Ativa a janela (exceto o card do canto, que não rouba o foco).</summary>
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
-        // O card do canto não rouba foco: interromper quem está digitando é
-        // justamente o que o nível Normal não deve fazer.
         if (_viewModel.Mode == PresentationMode.Corner)
         {
             return;
@@ -70,7 +69,7 @@ public partial class AlertWindow : Window
         }
     }
 
-    // ---------- Segurar para dispensar ----------
+    // ---------- Hold to dismiss | Segurar para dispensar ----------
 
     private void OnHoldStarted(object sender, MouseButtonEventArgs e)
     {
@@ -84,6 +83,7 @@ public partial class AlertWindow : Window
         _viewModel.HoldProgress = 0;
     }
 
+    /// <summary>Advances the hold progress and dismisses when it completes. | Avança o progresso do segurar e dispensa quando completa.</summary>
     private void OnHoldTick(object? sender, EventArgs e)
     {
         var decorrido = DateTime.UtcNow - _holdStart;
@@ -100,8 +100,9 @@ public partial class AlertWindow : Window
         _viewModel.HoldProgress = progresso;
     }
 
-    // ---------- Digitar a frase ----------
+    // ---------- Type the phrase | Digitar a frase ----------
 
+    /// <summary>Dismisses once the typed text matches the phrase. | Dispensa quando o texto digitado bate com a frase.</summary>
     private void OnPhraseChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
     {
         var digitado = PhraseBox.Text.Trim();

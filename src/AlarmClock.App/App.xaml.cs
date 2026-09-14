@@ -17,21 +17,19 @@ using MainWindowView = AlarmClock.App.Views.MainWindow;
 
 namespace AlarmClock.App;
 
+/// <summary>Application entry point: DI, logging, single instance and startup. | Ponto de entrada do app: DI, log, instância única e arranque.</summary>
 public partial class App : Application
 {
-    // Escopo local do usuário: duas contas no mesmo Windows podem rodar o app
-    // ao mesmo tempo, mas a mesma conta não.
+    // Per-user scope for the single-instance mutex. | Escopo por usuário para o mutex de instância única.
     private const string SingleInstanceMutexName = @"Local\AlarmClock.SingleInstance";
 
     private Mutex? _singleInstanceMutex;
     private IHost? _host;
 
-    /// <summary>
-    /// Ligado quando o encerramento é intencional, para a janela principal
-    /// saber que ali não é para esconder na bandeja — é para fechar mesmo.
-    /// </summary>
+    /// <summary>True during an intentional shutdown, so the window really closes. | Verdadeiro durante o encerramento intencional, para a janela fechar de fato.</summary>
     public static bool IsShuttingDown { get; private set; }
 
+    /// <summary>Wires up services and shows the tray icon and main window. | Monta os serviços e mostra o ícone da bandeja e a janela principal.</summary>
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
@@ -39,8 +37,7 @@ public partial class App : Application
         _singleInstanceMutex = new Mutex(initiallyOwned: true, SingleInstanceMutexName, out var isFirstInstance);
         if (!isFirstInstance)
         {
-            // Fase 1 troca isto por um named pipe que traz a janela da instância
-            // já rodando para a frente, em vez de simplesmente sumir.
+            // A second instance just exits. | Uma segunda instância apenas encerra.
             _singleInstanceMutex.Dispose();
             _singleInstanceMutex = null;
             Shutdown();
@@ -58,9 +55,7 @@ public partial class App : Application
             .UseSerilog()
             .ConfigureServices(services =>
             {
-                // CreateDefaultBuilder instala o ConsoleLifetime, que num app de
-                // bandeja só serve para escrever "Press Ctrl+C to shut down" num
-                // console que não existe. A última registração vence no DI.
+                // Replace the console lifetime; this is a tray app. | Substitui o console lifetime; este é um app de bandeja.
                 services.AddSingleton<IHostLifetime, WpfHostLifetime>();
 
                 services.AddSingleton<ISystemClock, SystemClock>();
@@ -80,14 +75,11 @@ public partial class App : Application
                 services.AddSingleton<MainViewModel>();
                 services.AddSingleton<MainWindowView>();
 
-                // Por último: ao subir, ele já carrega os alarmes e começa a
-                // tiquetaquear, e por isso precisa da bandeja de pé antes.
                 services.AddHostedService<SchedulerHost>();
             })
             .Build();
 
-        // A bandeja antes do host: o SchedulerHost escreve o status nela assim
-        // que inicia.
+        // Show the tray before starting the host, which writes its status. | Mostra a bandeja antes de iniciar o host, que escreve nela.
         _host.Services.GetRequiredService<TrayIconService>().Show();
 
         _host.Start();
@@ -95,14 +87,14 @@ public partial class App : Application
         var janela = _host.Services.GetRequiredService<MainWindowView>();
         MainWindow = janela;
 
-        // --minimized: como o app sobe junto com o Windows, jogar a janela na
-        // cara de quem acabou de ligar o PC seria péssima educação.
+        // --minimized: start hidden in the tray. | --minimized: inicia escondido na bandeja.
         if (!e.Args.Contains("--minimized", StringComparer.OrdinalIgnoreCase))
         {
             janela.Show();
         }
     }
 
+    /// <summary>Tears down the host and releases the single-instance mutex. | Desmonta o host e libera o mutex de instância única.</summary>
     protected override void OnExit(ExitEventArgs e)
     {
         IsShuttingDown = true;
@@ -123,6 +115,7 @@ public partial class App : Application
         base.OnExit(e);
     }
 
+    /// <summary>Configures file logging (Serilog, rolling, shared, UTF-8 BOM). | Configura o log em arquivo (Serilog, rotativo, compartilhado, UTF-8 com BOM).</summary>
     private static void ConfigureLogging()
     {
         Log.Logger = new LoggerConfiguration()
@@ -132,21 +125,14 @@ public partial class App : Application
                 AppPaths.LogFilePattern,
                 rollingInterval: RollingInterval.Day,
                 retainedFileCountLimit: 7,
-                // Sem shared:true o Serilog mantém lock exclusivo e você não
-                // consegue abrir o log enquanto o app roda — que é justamente
-                // quando você precisa dele.
                 shared: true,
-                // Com BOM: sem ele o Bloco de Notas e o PowerShell 5.1 leem o
-                // arquivo como ANSI e todo acento vira lixo.
                 encoding: new UTF8Encoding(encoderShouldEmitUTF8Identifier: true),
                 outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
             .CreateLogger();
     }
 
     /// <summary>
-    /// Decide o idioma no arranque, antes de qualquer janela: a escolha salva
-    /// (do instalador ou do seletor no app) vence; sem ela, segue o Windows;
-    /// o fallback final é inglês. Não há troca a quente — o app reinicia.
+    /// Picks the language at startup: saved setting, else Windows, else English. | Escolhe o idioma no arranque: preferência salva, senão o Windows, senão inglês.
     /// </summary>
     private static void ResolveLanguage()
     {
@@ -160,18 +146,13 @@ public partial class App : Application
 
         Loc.Set(idioma);
 
-        // Alinha as culturas de formatação padrão do processo ao idioma.
         CultureInfo.CurrentCulture = Loc.Culture;
         CultureInfo.CurrentUICulture = Loc.Culture;
         CultureInfo.DefaultThreadCurrentCulture = Loc.Culture;
         CultureInfo.DefaultThreadCurrentUICulture = Loc.Culture;
     }
 
-    /// <summary>
-    /// Um despertador que morre calado é pior que um que não existe: se o
-    /// processo cair, o alarme não toca e você não fica sabendo. Tudo que
-    /// escapar vai para o log antes de o processo sumir.
-    /// </summary>
+    /// <summary>Logs any unhandled exception so the process never dies silently. | Registra qualquer exceção não tratada para o processo nunca morrer calado.</summary>
     private void HookGlobalExceptionHandlers()
     {
         DispatcherUnhandledException += OnDispatcherUnhandledException;
@@ -186,12 +167,12 @@ public partial class App : Application
         };
     }
 
+    /// <summary>Logs a UI exception, keeps the app running, and warns the user. | Registra uma exceção da UI, mantém o app vivo e avisa o usuário.</summary>
     private void OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
     {
         Log.Error(e.Exception, "Exceção não tratada na UI.");
 
-        // Manter o processo vivo: uma falha ao desenhar uma janela não pode
-        // derrubar o agendador junto.
+        // Keep the process alive: a UI failure must not take down the scheduler. | Mantém o processo vivo: uma falha de UI não pode derrubar o agendador.
         e.Handled = true;
 
         MessageBox.Show(

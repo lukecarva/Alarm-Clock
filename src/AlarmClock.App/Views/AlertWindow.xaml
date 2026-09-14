@@ -11,8 +11,7 @@
         TextOptions.TextRenderingMode="ClearType">
 
     <Window.Resources>
-        <!-- A mesma janela serve para o card do canto, o modal e o overlay de
-             tela cheia. O que muda é a escala da tipografia. -->
+        <!-- One window for corner, modal and full screen; only the type scale changes. | Uma janela para canto, modal e tela cheia; só a escala da tipografia muda. -->
         <Style x:Key="AlertTitle" TargetType="TextBlock" BasedOn="{StaticResource Text.Title}">
             <Setter Property="FontSize" Value="26" />
             <Style.Triggers>
@@ -38,7 +37,7 @@
         </Style>
     </Window.Resources>
 
-    <!-- Faixa da cor da urgência no topo: dá para saber a gravidade antes de ler. -->
+    <!-- Urgency accent strip at the top | Faixa da cor da urgência no topo -->
     <Border BorderBrush="{Binding AccentBrush}" BorderThickness="0,5,0,0">
         <Grid Style="{StaticResource AlertRoot}">
             <Grid.RowDefinitions>
@@ -50,7 +49,7 @@
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
-            <!-- Relógio (só na tela cheia) -->
+            <!-- Clock (full screen only) | Relógio (só na tela cheia) -->
             <TextBlock Grid.Row="0"
                        Text="{Binding NowText}"
                        FontFamily="{StaticResource Font.Ui}"
@@ -70,7 +69,7 @@
                 </TextBlock.Style>
             </TextBlock>
 
-            <!-- Nível + horário -->
+            <!-- Level and time | Nível e horário -->
             <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,10">
                 <Border Background="{Binding AccentBrush}" CornerRadius="4" Padding="7,2">
                     <TextBlock Text="{Binding UrgencyName}"
@@ -93,7 +92,7 @@
                        Text="{Binding Message}"
                        Visibility="{Binding HasMessage, Converter={StaticResource BoolToVis}}" />
 
-            <!-- Ações -->
+            <!-- Actions | Ações -->
             <StackPanel Grid.Row="5" Margin="0,22,0,0">
 
                 <TextBlock Style="{StaticResource Text.Caption}"
@@ -102,7 +101,7 @@
                            Text="{Binding SnoozeRefusal}"
                            Visibility="{Binding SnoozeRefusal, Converter={StaticResource NullToVis}}" />
 
-                <!-- Um clique resolve -->
+                <!-- One click | Um clique -->
                 <StackPanel Orientation="Horizontal">
                     <StackPanel.Style>
                         <Style TargetType="StackPanel">
@@ -122,7 +121,7 @@
                             Command="{Binding DismissCommand}" />
                 </StackPanel>
 
-                <!-- Segurar para dispensar -->
+                <!-- Hold to dismiss | Segurar para dispensar -->
                 <StackPanel>
                     <StackPanel.Style>
                         <Style TargetType="StackPanel">
@@ -150,7 +149,7 @@
                                  BorderThickness="0" />
                 </StackPanel>
 
-                <!-- Digitar a frase -->
+                <!-- Type the phrase | Digitar a frase -->
                 <StackPanel>
                     <StackPanel.Style>
                         <Style TargetType="StackPanel">
@@ -180,7 +179,7 @@
                              BorderBrush="{StaticResource Brush.Border}" />
                 </StackPanel>
 
-                <!-- Adiar -->
+                <!-- Snooze | Adiar -->
                 <StackPanel Margin="0,16,0,0"
                             Visibility="{Binding CanSnooze, Converter={StaticResource BoolToVis}}">
                 <TextBlock Style="{StaticResource Text.Caption}" Text="{loc:Loc Alert_SnoozeBy}" Margin="0,0,0,6" />

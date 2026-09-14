@@ -7,27 +7,25 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 namespace AlarmClock.Core.Persistence;
 
+/// <summary>Loads and saves the alarm list. | Carrega e salva a lista de alarmes.</summary>
 public interface IAlarmStore
 {
+    /// <summary>Reads all alarms. | Lê todos os alarmes.</summary>
     IReadOnlyList<Alarm> Load();
 
+    /// <summary>Writes all alarms. | Grava todos os alarmes.</summary>
     void Save(IEnumerable<Alarm> alarms);
 }
 
-/// <summary>
-/// Um arquivo JSON legível e editável à mão. Para uso pessoal, com dezenas de
-/// alarmes, um banco seria peso morto e uma migração a mais para manter.
-/// </summary>
+/// <summary>Stores alarms in a human-readable JSON file. | Guarda os alarmes num arquivo JSON legível.</summary>
 public sealed class JsonAlarmStore : IAlarmStore
 {
+    /// <summary>Serializer options: indented, no nulls, unescaped accents, enums as names. | Opções do serializador: indentado, sem nulos, acentos sem escape, enums como nome.</summary>
     public static readonly JsonSerializerOptions SerializerOptions = new()
     {
         WriteIndented = true,
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-        // Sem escapar acentos: o arquivo é para ser lido por gente.
         Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
-        // "Critical" em vez de 3. O arquivo só é editável à mão se der para
-        // entender o que está escrito nele.
         Converters = { new JsonStringEnumConverter() },
     };
 
@@ -40,6 +38,7 @@ public sealed class JsonAlarmStore : IAlarmStore
         _log = log ?? NullLogger<JsonAlarmStore>.Instance;
     }
 
+    /// <summary>Reads the alarms; quarantines an unreadable file and returns empty. | Lê os alarmes; põe em quarentena um arquivo ilegível e retorna vazio.</summary>
     public IReadOnlyList<Alarm> Load()
     {
         if (!File.Exists(_path))
@@ -54,9 +53,7 @@ public sealed class JsonAlarmStore : IAlarmStore
         }
         catch (Exception ex) when (ex is JsonException or NotSupportedException)
         {
-            // Nunca sobrescrever silenciosamente um arquivo que não deu para
-            // ler: pode ser a única cópia dos alarmes. Guarda de lado e segue
-            // com a lista vazia.
+            // Move the unreadable file aside instead of overwriting it. | Move o arquivo ilegível para o lado em vez de sobrescrevê-lo.
             var quarentena = $"{_path}.corrompido-{DateTime.Now:yyyyMMdd-HHmmss}";
 
             _log.LogError(
@@ -77,6 +74,7 @@ public sealed class JsonAlarmStore : IAlarmStore
         }
     }
 
+    /// <summary>Writes the alarms atomically (temp file + replace with backup). | Grava os alarmes de forma atômica (arquivo temporário + replace com backup).</summary>
     public void Save(IEnumerable<Alarm> alarms)
     {
         var lista = alarms.ToList();
@@ -88,8 +86,6 @@ public sealed class JsonAlarmStore : IAlarmStore
             Directory.CreateDirectory(pasta);
         }
 
-        // Escrita atômica: um crash no meio do Save não pode deixar o arquivo
-        // truncado, porque isso apagaria todos os alarmes de uma vez.
         var temp = _path + ".tmp";
         File.WriteAllText(temp, json, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
 

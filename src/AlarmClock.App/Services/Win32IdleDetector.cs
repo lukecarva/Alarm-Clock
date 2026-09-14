@@ -3,10 +3,7 @@ using AlarmClock.Core.Abstractions;
 
 namespace AlarmClock.App.Services;
 
-/// <summary>
-/// Ociosidade pela última entrada de teclado ou mouse, via
-/// <c>GetLastInputInfo</c>.
-/// </summary>
+/// <summary>Idle time from the last keyboard/mouse input, via GetLastInputInfo. | Tempo ocioso desde a última entrada de teclado/mouse, via GetLastInputInfo.</summary>
 public sealed class Win32IdleDetector : IIdleDetector
 {
     [StructLayout(LayoutKind.Sequential)]
@@ -16,12 +13,11 @@ public sealed class Win32IdleDetector : IIdleDetector
         public uint dwTime;
     }
 
-    // DllImport, não LibraryImport: este último exige AllowUnsafeBlocks no
-    // projeto inteiro, e não vale habilitar unsafe por três P/Invoke triviais.
     [DllImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool GetLastInputInfo(ref LastInputInfo info);
 
+    /// <summary>Time since the last input; assumes present if the call fails. | Tempo desde a última entrada; assume presença se a chamada falhar.</summary>
     public TimeSpan IdleFor
     {
         get
@@ -30,14 +26,10 @@ public sealed class Win32IdleDetector : IIdleDetector
 
             if (!GetLastInputInfo(ref info))
             {
-                // Falhou: assume presença. O erro aqui não pode virar alarme
-                // silenciado.
                 return TimeSpan.Zero;
             }
 
-            // dwTime vive no mesmo espaço de GetTickCount: 32 bits, que dá a
-            // volta a cada ~49,7 dias. A subtração em uint dá o resultado certo
-            // mesmo na virada; fazer a conta em int (ou em long) não daria.
+            // uint subtraction stays correct across the 32-bit tick wraparound. | A subtração em uint continua correta na virada de 32 bits do contador.
             var agora = (uint)Environment.TickCount;
             var decorrido = agora - info.dwTime;
 

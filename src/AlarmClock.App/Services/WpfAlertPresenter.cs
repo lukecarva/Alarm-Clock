@@ -10,9 +10,7 @@ using Microsoft.Extensions.Logging;
 
 namespace AlarmClock.App.Services;
 
-/// <summary>
-/// Escolhe e monta a janela do alerta a partir do perfil de urgência.
-/// </summary>
+/// <summary>Chooses and builds the alert window from the urgency profile. | Escolhe e monta a janela do alerta a partir do perfil de urgência.</summary>
 public sealed class WpfAlertPresenter(
     IAlarmScheduler scheduler,
     TrayIconService tray,
@@ -24,9 +22,10 @@ public sealed class WpfAlertPresenter(
     private readonly IIdleDetector _idle = idle;
     private readonly ILogger<WpfAlertPresenter> _log = log;
 
-    /// <summary>Alertas na tela, por alarme. Impede dois alertas do mesmo alarme.</summary>
+    /// <summary>On-screen alerts by alarm; prevents two alerts for one alarm. | Alertas na tela por alarme; impede dois alertas do mesmo alarme.</summary>
     private readonly Dictionary<Guid, AlertSession> _abertos = [];
 
+    /// <summary>Presents a triggered alarm (skips, toast, window or escalation). | Apresenta um alarme disparado (pula, toast, janela ou escalada).</summary>
     public void Show(AlarmTriggeredEventArgs trigger)
     {
         if (ShouldSkipForAbsence(trigger, out var ocioso))
@@ -62,14 +61,11 @@ public sealed class WpfAlertPresenter(
                 return;
             }
 
-            // Escalada: troca a janela atual por uma mais intrusiva. Close()
-            // dispara Encerrar, que remove esta sessão de _abertos e para o som.
+            // Escalation replaces the current window with a more intrusive one. | Escalada troca a janela atual por uma mais intrusiva.
             _log.LogInformation("Alerta de {Titulo} substituído pela versão escalada.", trigger.Alarm.Title);
             existente.Window.Close();
         }
 
-        // ToString() nos enums: sem isso o Serilog os renderiza entre aspas e o
-        // log fica com [Normal/"Corner"] "OnTime".
         _log.LogInformation(
             "Alerta: {Titulo} [{Nivel}/{Modo}] motivo={Motivo}.",
             trigger.Alarm.Title,
@@ -87,6 +83,7 @@ public sealed class WpfAlertPresenter(
         MostrarJanela(trigger, modo, som);
     }
 
+    /// <summary>Opens the alert window and starts its sound. | Abre a janela do alerta e inicia o som.</summary>
     private void MostrarJanela(AlarmTriggeredEventArgs trigger, PresentationMode modo, SoundSpec som)
     {
         var viewModel = new AlertViewModel(trigger, modo, _scheduler);
@@ -102,9 +99,7 @@ public sealed class WpfAlertPresenter(
         }
         else
         {
-            // O conteúdo manda no tamanho: um alarme sem mensagem e sem
-            // adiamento é um card baixo; um com três opções de adiar é alto.
-            // Altura fixa cortaria os botões de baixo.
+            // The content sizes the card; a fixed height would clip the buttons. | O conteúdo dimensiona o card; altura fixa cortaria os botões.
             janela.SizeToContent = SizeToContent.WidthAndHeight;
             janela.MinWidth = 380;
             janela.MaxWidth = 460;
@@ -126,6 +121,7 @@ public sealed class WpfAlertPresenter(
         sessao.Audio.Play(som);
     }
 
+    /// <summary>Covers every monitor: main window plus one overlay per extra screen. | Cobre todos os monitores: janela principal mais um overlay por tela extra.</summary>
     private static void AbrirEmTelaCheia(AlertWindow janela, AlertViewModel viewModel, AlertSession sessao)
     {
         var telas = System.Windows.Forms.Screen.AllScreens;
@@ -134,8 +130,6 @@ public sealed class WpfAlertPresenter(
         janela.Show();
         Win32Windows.PlacePhysical(janela, principal.Bounds, activate: true);
 
-        // Uma janela por monitor: cobrir só a tela principal deixaria a saída
-        // pela lateral, que é exatamente o que o nível Crítico não quer.
         foreach (var tela in telas.Where(t => !t.Equals(principal)))
         {
             var overlay = new OverlayWindow(viewModel);
@@ -145,14 +139,7 @@ public sealed class WpfAlertPresenter(
         }
     }
 
-    /// <summary>
-    /// Vale a pena alertar uma cadeira vazia?
-    /// </summary>
-    /// <remarks>
-    /// Só para o disparo na hora: alarme perdido já tem a política do
-    /// <c>WhenAway</c>, e adiamento foi você que pediu — descartar por ausência
-    /// jogaria fora algo explicitamente adiado.
-    /// </remarks>
+    /// <summary>Whether to skip an on-time alert because the user is away. | Se deve pular um alerta na hora por o usuário estar ausente.</summary>
     private bool ShouldSkipForAbsence(AlarmTriggeredEventArgs trigger, out TimeSpan ocioso)
     {
         ocioso = TimeSpan.Zero;
@@ -166,10 +153,7 @@ public sealed class WpfAlertPresenter(
         return ocioso >= limite;
     }
 
-    /// <summary>
-    /// Como este alarme deve aparecer agora — o que pode não ser o que o perfil
-    /// diz, se ele chegou atrasado.
-    /// </summary>
+    /// <summary>Resolves how to show now, downgrading missed alarms per policy. | Resolve como mostrar agora, rebaixando alarmes perdidos conforme a política.</summary>
     private static (PresentationMode Mode, SoundSpec Sound)? Resolve(AlarmTriggeredEventArgs trigger)
     {
         var perfil = trigger.EffectiveProfile;
@@ -183,8 +167,7 @@ public sealed class WpfAlertPresenter(
         {
             MissedAlarmBehavior.Discard => null,
 
-            // Rebaixado de propósito: um alarme de três horas atrás não merece
-            // tela cheia com sirene, mas você precisa saber que ele existiu.
+            // A missed alarm returns as a silent corner card. | Um alarme perdido volta como card silencioso no canto.
             MissedAlarmBehavior.ShowOnReturn => (PresentationMode.Corner, SoundSpec.Silent),
 
             MissedAlarmBehavior.FireOnReturn => (perfil.Presentation, trigger.EffectiveSound),
@@ -193,6 +176,7 @@ public sealed class WpfAlertPresenter(
         };
     }
 
+    /// <summary>Closes an alert session: stops sound and closes overlays. | Encerra uma sessão de alerta: para o som e fecha os overlays.</summary>
     private void Encerrar(Guid alarmId)
     {
         if (!_abertos.Remove(alarmId, out var sessao))
@@ -208,6 +192,7 @@ public sealed class WpfAlertPresenter(
         }
     }
 
+    /// <summary>An open alert: its window, sound and extra-monitor overlays. | Um alerta aberto: sua janela, som e overlays dos monitores extras.</summary>
     private sealed record AlertSession(AlertWindow Window, AlarmAudioPlayer Audio)
     {
         public List<OverlayWindow> Overlays { get; } = [];

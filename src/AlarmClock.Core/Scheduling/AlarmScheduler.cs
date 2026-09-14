@@ -6,43 +6,39 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 namespace AlarmClock.Core.Scheduling;
 
+/// <summary>Schedules alarms and raises an event when one is due. | Agenda alarmes e emite um evento quando algum vence.</summary>
 public interface IAlarmScheduler
 {
+    /// <summary>Raised when an alarm fires. | Emitido quando um alarme dispara.</summary>
     event EventHandler<AlarmTriggeredEventArgs>? Triggered;
 
-    /// <summary>Próximo disparo previsto, contando adiamentos. Nulo = nada agendado.</summary>
+    /// <summary>Next expected firing, snoozes included. Null = nothing scheduled. | Próximo disparo previsto, adiamentos incluídos. Nulo = nada agendado.</summary>
     DateTimeOffset? NextFireTime { get; }
 
-    /// <summary>Substitui o conjunto de alarmes e recalcula tudo.</summary>
+    /// <summary>Replaces the alarm set and recomputes everything. | Substitui o conjunto de alarmes e recalcula tudo.</summary>
     void Reload(IEnumerable<Alarm> alarms);
 
-    /// <summary>
-    /// Avalia o relógio agora e dispara o que estiver vencido. Chamado uma vez
-    /// por segundo pelo app — e diretamente pelos testes, com um relógio falso.
-    /// </summary>
+    /// <summary>Evaluates the clock now and fires whatever is due. | Avalia o relógio agora e dispara o que estiver vencido.</summary>
     void Tick();
 
+    /// <summary>Tries to snooze an alarm; on failure returns a reason. | Tenta adiar um alarme; em caso de falha retorna o motivo.</summary>
     bool TrySnooze(Guid alarmId, TimeSpan delay, out string? refusal);
 
-    /// <summary>Encerra o alerta: cancela adiamento pendente e zera o contador.</summary>
+    /// <summary>Ends the alert: cancels a pending snooze and clears the counter. | Encerra o alerta: cancela adiamento pendente e zera o contador.</summary>
     void Dismiss(Guid alarmId);
 
+    /// <summary>How many times the alarm has been snoozed. | Quantas vezes o alarme foi adiado.</summary>
     int SnoozeCountFor(Guid alarmId);
 }
 
 /// <summary>
-/// O coração do app. Não usa timer longo nem conta deltas: compara o relógio de
-/// parede a cada chamada de <see cref="Tick"/>. É o que faz o agendador
-/// sobreviver a hibernação, troca de fuso e usuário mexendo no relógio — os
-/// três jeitos clássicos de um despertador simplesmente não tocar.
+/// Compares the wall clock on every <see cref="Tick"/> instead of using long
+/// timers, so it survives sleep, time-zone and clock changes. | Compara o relógio de parede a cada <see cref="Tick"/> em vez de usar timers
+/// longos, sobrevivendo a hibernação e a mudanças de fuso e de relógio.
 /// </summary>
 public sealed class AlarmScheduler : IAlarmScheduler
 {
-    /// <summary>
-    /// Até este atraso, dispara como se fosse na hora. Acima disso é um alarme
-    /// perdido: acordar o PC às 15h e ouvir o alarme das 7h como se fosse agora
-    /// não ajuda ninguém.
-    /// </summary>
+    /// <summary>Up to this lateness fires as on-time; beyond it counts as missed. | Até este atraso dispara como na hora; além disso conta como perdido.</summary>
     public static readonly TimeSpan DefaultCatchUpWindow = TimeSpan.FromMinutes(15);
 
     private readonly ISystemClock _clock;
@@ -54,27 +50,21 @@ public sealed class AlarmScheduler : IAlarmScheduler
     private readonly Dictionary<Guid, DateTimeOffset> _snoozes = [];
     private readonly Dictionary<Guid, int> _snoozeCounts = [];
 
-    /// <summary>Estado da escalada de cada alarme com um alerta em curso.</summary>
+    /// <summary>Escalation state per alarm with an alert in progress. | Estado da escalada por alarme com um alerta em curso.</summary>
     private readonly Dictionary<Guid, EscalationState> _escalations = [];
 
     private DateTimeOffset _lastTick;
 
-    /// <summary>
-    /// Escalada em andamento de um alarme. Vive enquanto o alerta não é
-    /// dispensado; some no <see cref="Dismiss"/> ou quando o alarme dispara uma
-    /// ocorrência nova (que recomeça do nível base).
-    /// </summary>
+    /// <summary>An alarm's in-progress escalation; lives until dismissed or the next occurrence. | A escalada em curso de um alarme; vive até ser dispensada ou a próxima ocorrência.</summary>
     private sealed class EscalationState
     {
+        /// <summary>The policy driving the escalation. | A política que rege a escalada.</summary>
         public required EscalationPolicy Policy { get; init; }
 
-        /// <summary>Nível efetivo atual — sobe a cada degrau da escalada.</summary>
+        /// <summary>Current effective level; rises each step. | Nível efetivo atual; sobe a cada degrau.</summary>
         public required UrgencyLevel Level { get; set; }
 
-        /// <summary>
-        /// Quando sobe por ficar ignorado. Nulo enquanto pausado (durante um
-        /// adiamento, quando o alerta não está na tela) ou no teto.
-        /// </summary>
+        /// <summary>When it rises for being ignored. Null while paused or at ceiling. | Quando sobe por ficar ignorado. Nulo enquanto pausado ou no teto.</summary>
         public DateTimeOffset? IgnoreDeadline { get; set; }
     }
 
@@ -85,6 +75,7 @@ public sealed class AlarmScheduler : IAlarmScheduler
         _lastTick = _clock.Now;
     }
 
+    /// <summary>Lateness threshold between on-time and missed. | Limite de atraso entre "na hora" e "perdido".</summary>
     public TimeSpan CatchUpWindow { get; init; } = DefaultCatchUpWindow;
 
     public event EventHandler<AlarmTriggeredEventArgs>? Triggered;
@@ -113,7 +104,7 @@ public sealed class AlarmScheduler : IAlarmScheduler
                 _alarms[alarm.Id] = alarm;
             }
 
-            // Adiamentos e contadores de alarmes que sumiram vão junto.
+            // Drop snoozes, counters and escalations of alarms that are gone. | Descarta adiamentos, contadores e escaladas de alarmes que sumiram.
             foreach (var orfao in _snoozes.Keys.Where(id => !_alarms.ContainsKey(id)).ToList())
             {
                 _snoozes.Remove(orfao);
@@ -155,8 +146,7 @@ public sealed class AlarmScheduler : IAlarmScheduler
             _lastTick = now;
         }
 
-        // Fora do lock: um handler que abre janela (ou que chame Reload de
-        // volta) não pode travar o agendador.
+        // Raise outside the lock: a handler may open a window or call Reload. | Emite fora do lock: um handler pode abrir janela ou chamar Reload.
         foreach (var disparo in disparos)
         {
             Triggered?.Invoke(this, disparo);
@@ -173,9 +163,7 @@ public sealed class AlarmScheduler : IAlarmScheduler
                 return false;
             }
 
-            // A política de adiamento segue o nível efetivo: se a escalada já
-            // levou o alarme a Crítico, vale o limite de Crítico (1x), não o do
-            // nível base.
+            // Snooze policy follows the effective (possibly escalated) level. | A política de adiamento segue o nível efetivo (possivelmente escalado).
             var nivel = _escalations.TryGetValue(alarmId, out var esc) ? esc.Level : alarm.Urgency;
             var perfil = UrgencyProfiles.Get(nivel);
             var policy = perfil.Snooze;
@@ -201,8 +189,7 @@ public sealed class AlarmScheduler : IAlarmScheduler
 
             if (esc is not null)
             {
-                // Adiar tira o alerta da tela: o relógio de "ignorado" pausa e
-                // volta a correr quando o adiamento reapresentar o alarme.
+                // Snoozing hides the alert, so the "ignored" clock pauses. | Adiar tira o alerta da tela, então o relógio de "ignorado" pausa.
                 esc.IgnoreDeadline = null;
 
                 if (esc.Policy.AfterSnoozes is { } max && usados + 1 >= max)
@@ -242,9 +229,7 @@ public sealed class AlarmScheduler : IAlarmScheduler
         }
     }
 
-    /// <summary>
-    /// Sobe um nível, sem passar do teto nem de <see cref="UrgencyLevel.Critical"/>.
-    /// </summary>
+    /// <summary>Rises one level, capped at the ceiling and Critical. | Sobe um nível, limitado pelo teto e por Crítico.</summary>
     private static UrgencyLevel Bump(UrgencyLevel level, UrgencyLevel ceiling)
     {
         var proximo = (UrgencyLevel)((int)level + 1);
@@ -265,6 +250,7 @@ public sealed class AlarmScheduler : IAlarmScheduler
         }
     }
 
+    /// <summary>Recomputes the next occurrence of every alarm. | Recalcula a próxima ocorrência de cada alarme.</summary>
     private void RecomputeAll(DateTimeOffset now)
     {
         var zone = _clock.LocalTimeZone;
@@ -281,6 +267,7 @@ public sealed class AlarmScheduler : IAlarmScheduler
         }
     }
 
+    /// <summary>Collects everything due now: snoozes, escalations and occurrences. | Coleta tudo que vence agora: adiamentos, escaladas e ocorrências.</summary>
     private List<AlarmTriggeredEventArgs> Collect(DateTimeOffset now)
     {
         var disparos = new List<AlarmTriggeredEventArgs>();
@@ -292,7 +279,7 @@ public sealed class AlarmScheduler : IAlarmScheduler
 
             if (_alarms.TryGetValue(id, out var alarme))
             {
-                // O alerta volta à tela: o relógio de "ignorado" recomeça a partir de agora.
+                // Alert is back on screen: the "ignored" clock restarts from now. | O alerta volta à tela: o relógio de "ignorado" recomeça a partir de agora.
                 var nivel = alarme.Urgency;
                 if (_escalations.TryGetValue(id, out var esc))
                 {
@@ -319,9 +306,7 @@ public sealed class AlarmScheduler : IAlarmScheduler
         {
             var alarme = _alarms[id];
 
-            // Avança até voltar para o futuro, contando quantas ocorrências
-            // passaram em branco. PC desligado por três dias com alarme diário
-            // dá um alerta, não três.
+            // Advance to the future, counting how many occurrences were skipped. | Avança até o futuro, contando quantas ocorrências foram puladas.
             var vencida = _next[id];
             var ocorrencias = 0;
             DateTimeOffset? cursor = vencida;
@@ -348,8 +333,7 @@ public sealed class AlarmScheduler : IAlarmScheduler
                 _next[id] = cursor.Value;
             }
 
-            // Nova ocorrência: orçamento de adiamentos zerado e escalada
-            // recomeçada do nível base.
+            // New occurrence: reset the snooze budget and restart escalation. | Nova ocorrência: zera o orçamento de adiamentos e reinicia a escalada.
             _snoozeCounts.Remove(id);
             ResetEscalation(id, alarme, now);
 
@@ -369,7 +353,7 @@ public sealed class AlarmScheduler : IAlarmScheduler
         return disparos;
     }
 
-    /// <summary>Arma (ou limpa) o estado de escalada para uma ocorrência nova.</summary>
+    /// <summary>Arms (or clears) the escalation state for a new occurrence. | Arma (ou limpa) o estado de escalada para uma ocorrência nova.</summary>
     private void ResetEscalation(Guid id, Alarm alarme, DateTimeOffset now)
     {
         if (alarme.Escalation is not { } pol)
@@ -388,9 +372,7 @@ public sealed class AlarmScheduler : IAlarmScheduler
         };
     }
 
-    /// <summary>
-    /// Reapresenta, um nível acima, os alarmes cujo prazo de "ignorado" venceu.
-    /// </summary>
+    /// <summary>Re-shows, one level higher, alarms whose "ignored" deadline passed. | Reapresenta, um nível acima, os alarmes cujo prazo de "ignorado" venceu.</summary>
     private List<AlarmTriggeredEventArgs> CollectEscalations(DateTimeOffset now)
     {
         var disparos = new List<AlarmTriggeredEventArgs>();
@@ -411,7 +393,7 @@ public sealed class AlarmScheduler : IAlarmScheduler
 
             if (subido == esc.Level)
             {
-                // Já no teto: para de contar, sem reapresentar de novo à toa.
+                // Already at ceiling: stop counting. | Já no teto: para de contar.
                 esc.IgnoreDeadline = null;
                 continue;
             }

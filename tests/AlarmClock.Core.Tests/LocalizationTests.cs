@@ -3,11 +3,7 @@ using AlarmClock.Core.Scheduling;
 
 namespace AlarmClock.Core.Tests;
 
-/// <summary>
-/// Confere que o mesmo domínio produz texto nos dois idiomas. Restaura o
-/// português no fim porque o idioma é estado global compartilhado com os
-/// demais testes (que rodam em série, ver <see cref="TestInit"/>).
-/// </summary>
+/// <summary>Checks that the domain produces text in both languages. | Confere que o domínio produz texto nos dois idiomas.</summary>
 public class LocalizationTests : IDisposable
 {
     public void Dispose()

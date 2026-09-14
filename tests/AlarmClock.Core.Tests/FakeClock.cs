@@ -2,17 +2,14 @@ using AlarmClock.Core.Abstractions;
 
 namespace AlarmClock.Core.Tests;
 
-/// <summary>
-/// Relógio controlado pelos testes. A partir da Fase 1 é o que permite simular
-/// "o PC dormiu 3 horas" ou "entrou o horário de verão" sem esperar nada.
-/// </summary>
+/// <summary>Test-controlled clock, to simulate the passage of time. | Relógio controlado pelos testes, para simular a passagem do tempo.</summary>
 public sealed class FakeClock(DateTimeOffset start, TimeZoneInfo? zone = null) : ISystemClock
 {
     public DateTimeOffset Now { get; private set; } = start;
 
     public TimeZoneInfo LocalTimeZone { get; } = zone ?? TimeZoneInfo.Utc;
 
-    /// <summary>Avança o relógio. Use para simular a passagem do tempo.</summary>
+    /// <summary>Advances the clock forward. | Avança o relógio para a frente.</summary>
     public void Advance(TimeSpan by)
     {
         if (by < TimeSpan.Zero)
@@ -23,9 +20,6 @@ public sealed class FakeClock(DateTimeOffset start, TimeZoneInfo? zone = null) :
         Now += by;
     }
 
-    /// <summary>
-    /// Salta para um instante arbitrário — inclusive para trás, simulando o
-    /// usuário mexendo no relógio do sistema.
-    /// </summary>
+    /// <summary>Jumps to an arbitrary instant, even backwards. | Salta para um instante arbitrário, inclusive para trás.</summary>
     public void SetTo(DateTimeOffset instant) => Now = instant;
 }

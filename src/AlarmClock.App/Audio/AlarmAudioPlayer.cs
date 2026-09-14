@@ -6,10 +6,7 @@ using NAudio.Wave.SampleProviders;
 
 namespace AlarmClock.App.Audio;
 
-/// <summary>
-/// Toca o som de um alerta. Uma instância por alerta na tela — dois alarmes
-/// simultâneos tocam em paralelo, cada um com seu volume e seu fade.
-/// </summary>
+/// <summary>Plays an alert's sound; one instance per on-screen alert. | Toca o som de um alerta; uma instância por alerta na tela.</summary>
 public sealed class AlarmAudioPlayer(ILogger log) : IDisposable
 {
     private readonly ILogger _log = log;
@@ -18,6 +15,7 @@ public sealed class AlarmAudioPlayer(ILogger log) : IDisposable
     private AudioFileReader? _reader;
     private bool _disposed;
 
+    /// <summary>Plays the given sound (volume, fade and loop applied). | Toca o som informado (volume, fade e loop aplicados).</summary>
     public void Play(SoundSpec spec)
     {
         if (_disposed || spec.IsSilent)
@@ -49,13 +47,13 @@ public sealed class AlarmAudioPlayer(ILogger log) : IDisposable
         }
         catch (Exception ex)
         {
-            // Um alarme sem som ainda é um alarme. Placa muda, dispositivo
-            // ocupado ou arquivo corrompido não podem impedir o alerta visual.
+            // Keep the visual alert even if audio fails. | Mantém o alerta visual mesmo se o áudio falhar.
             _log.LogError(ex, "Falha ao tocar o som do alerta. Seguindo em silêncio.");
             Stop();
         }
     }
 
+    /// <summary>Builds the sample source: the user's file, or the built-in tone. | Monta a fonte de áudio: o arquivo do usuário, ou o tom embutido.</summary>
     private ISampleProvider BuildSource(SoundSpec spec)
     {
         if (spec.FilePath is { Length: > 0 } caminho && File.Exists(caminho))
@@ -75,6 +73,7 @@ public sealed class AlarmAudioPlayer(ILogger log) : IDisposable
         return new AlarmToneProvider(intervalo, repete);
     }
 
+    /// <summary>Stops playback and releases audio resources. | Para a reprodução e libera os recursos de áudio.</summary>
     public void Stop()
     {
         _output?.Dispose();

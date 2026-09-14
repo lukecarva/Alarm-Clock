@@ -9,35 +9,32 @@ public enum AppLanguage
     Portuguese,
 }
 
-/// <summary>
-/// Localização do app, em dois idiomas. É baseada em código (dois dicionários)
-/// em vez de .resx: para um app deste tamanho, evita satélites e problemas de
-/// geração de acessador fora do Visual Studio, e o conteúdo fica direto de
-/// revisar. O idioma é escolhido na instalação e lido no arranque; não há troca
-/// pela interface.
-/// </summary>
+/// <summary>App localization in two languages, backed by in-code dictionaries. | Localização do app em dois idiomas, baseada em dicionários no código.</summary>
 public static class Loc
 {
-    /// <summary>Idioma neutro/fallback: inglês.</summary>
+    /// <summary>Current language; neutral/fallback is English. | Idioma atual; neutro/fallback é inglês.</summary>
     public static AppLanguage Language { get; private set; } = AppLanguage.English;
 
-    /// <summary>Cultura para formatar datas e números no idioma atual.</summary>
+    /// <summary>Culture for formatting dates and numbers. | Cultura para formatar datas e números.</summary>
     public static CultureInfo Culture { get; private set; } = CultureInfo.GetCultureInfo("en-US");
 
+    /// <summary>Sets the current language and culture. | Define o idioma e a cultura atuais.</summary>
     public static void Set(AppLanguage language)
     {
         Language = language;
         Culture = CultureInfo.GetCultureInfo(language == AppLanguage.Portuguese ? "pt-BR" : "en-US");
     }
 
-    /// <summary>Converte o código salvo/escolhido ("pt-BR", "en"…) em idioma.</summary>
+    /// <summary>Maps a saved code ("pt-BR", "en"…) to a language. | Mapeia um código salvo ("pt-BR", "en"…) para um idioma.</summary>
     public static AppLanguage Parse(string? code) =>
         code?.StartsWith("pt", StringComparison.OrdinalIgnoreCase) == true
             ? AppLanguage.Portuguese
             : AppLanguage.English;
 
+    /// <summary>Code of the current language ("pt-BR" or "en"). | Código do idioma atual ("pt-BR" ou "en").</summary>
     public static string Code => Language == AppLanguage.Portuguese ? "pt-BR" : "en";
 
+    /// <summary>Looks up a string, falling back to English then the key. | Busca uma string, caindo para inglês e por fim a chave.</summary>
     public static string Get(string key)
     {
         var table = Language == AppLanguage.Portuguese ? Pt : En;
@@ -46,13 +43,14 @@ public static class Loc
             return value;
         }
 
-        // Fallback para inglês, e por fim a própria chave (denuncia tradução ausente).
         return En.TryGetValue(key, out var fallback) ? fallback : key;
     }
 
+    /// <summary>Looks up a string and formats it with the current culture. | Busca uma string e a formata com a cultura atual.</summary>
     public static string Format(string key, params object[] args) =>
         string.Format(Culture, Get(key), args);
 
+    /// <summary>Localized name of an urgency level. | Nome localizado de um nível de urgência.</summary>
     public static string UrgencyName(UrgencyLevel level) => Get($"Urgency_{level}");
 
     private static readonly Dictionary<string, string> En = new(StringComparer.Ordinal)
@@ -182,6 +180,7 @@ public static class Loc
         ["Val_BadInterval"] = "Invalid interval. Enter the minutes, e.g. 45.",
         ["Val_BadWindow"] = "Invalid time range. Use HH:mm in both fields.",
         ["Val_WindowEqual"] = "The time range needs a different start and end.",
+        ["Val_NeedWeekday"] = "Choose at least one weekday.",
         ["Val_BadDate"] = "Invalid date. Use {0}.",
         ["Val_PastInstant"] = "That moment has already passed.",
         ["Val_SaveFailed"] = "Couldn't save the alarm.",
@@ -317,6 +316,7 @@ public static class Loc
         ["Val_BadInterval"] = "Intervalo inválido. Informe os minutos, por exemplo 45.",
         ["Val_BadWindow"] = "Faixa de horário inválida. Use HH:mm nos dois campos.",
         ["Val_WindowEqual"] = "A faixa de horário precisa ter início e fim diferentes.",
+        ["Val_NeedWeekday"] = "Escolha pelo menos um dia da semana.",
         ["Val_BadDate"] = "Data inválida. Use {0}.",
         ["Val_PastInstant"] = "Esse instante já passou.",
         ["Val_SaveFailed"] = "Não foi possível salvar o alarme.",

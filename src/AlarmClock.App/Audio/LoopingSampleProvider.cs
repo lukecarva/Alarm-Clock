@@ -2,17 +2,14 @@ using NAudio.Wave;
 
 namespace AlarmClock.App.Audio;
 
-/// <summary>
-/// Reinicia o arquivo quando ele acaba. Reagir ao evento PlaybackStopped daria
-/// um buraco audível entre as voltas — aqui a emenda acontece dentro do mesmo
-/// buffer.
-/// </summary>
+/// <summary>Wraps an audio reader and restarts it seamlessly at the end. | Envolve um leitor de áudio e o reinicia sem emenda ao terminar.</summary>
 public sealed class LoopingSampleProvider(AudioFileReader reader) : ISampleProvider
 {
     private readonly AudioFileReader _reader = reader;
 
     public WaveFormat WaveFormat => _reader.WaveFormat;
 
+    /// <summary>Reads samples, looping back to the start when the file ends. | Lê amostras, voltando ao início quando o arquivo acaba.</summary>
     public int Read(float[] buffer, int offset, int count)
     {
         var total = 0;

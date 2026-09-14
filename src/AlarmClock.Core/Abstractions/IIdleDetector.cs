@@ -1,18 +1,13 @@
 namespace AlarmClock.Core.Abstractions;
 
-/// <summary>
-/// Há quanto tempo o teclado e o mouse não são tocados.
-/// </summary>
-/// <remarks>
-/// Serve para duas coisas opostas: não alertar quem não está na frente do PC, e
-/// perceber quem está na frente do PC há tempo demais.
-/// </remarks>
+/// <summary>Reports how long keyboard and mouse have been idle. | Informa há quanto tempo teclado e mouse estão parados.</summary>
 public interface IIdleDetector
 {
+    /// <summary>Time since the last keyboard/mouse input. | Tempo desde a última entrada de teclado/mouse.</summary>
     TimeSpan IdleFor { get; }
 }
 
-/// <summary>Sempre presente. Usado nos testes e como padrão inofensivo.</summary>
+/// <summary>Always reports present; used in tests and as a safe default. | Sempre reporta presença; usado em testes e como padrão seguro.</summary>
 public sealed class AlwaysPresentIdleDetector : IIdleDetector
 {
     public TimeSpan IdleFor => TimeSpan.Zero;

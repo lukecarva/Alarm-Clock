@@ -3,33 +3,31 @@ using AlarmClock.Core.Scheduling;
 
 namespace AlarmClock.Core.Model;
 
-/// <summary>
-/// Um lembrete de dia a dia pronto para ativar num clique. É só um preset de
-/// <see cref="Alarm"/> por intervalo — o trabalho pesado (ciclo, faixa de
-/// horário, não avisar cadeira vazia) já existe no agendamento.
-/// </summary>
-/// <param name="Key">Identificador estável, salvo em <see cref="Alarm.HabitKey"/>.</param>
-/// <param name="Emoji">Ícone curto para a lista.</param>
-/// <param name="DefaultMinutes">Intervalo sugerido.</param>
-/// <param name="Urgency">Quão intrusivo é o lembrete.</param>
+/// <summary>A one-click daily reminder preset. | Um preset de lembrete de dia a dia, de um clique.</summary>
+/// <param name="Key">Stable id, stored in <see cref="Alarm.HabitKey"/>. | Id estável, salvo em <see cref="Alarm.HabitKey"/>.</param>
+/// <param name="Emoji">Short icon for the list. | Ícone curto para a lista.</param>
+/// <param name="DefaultMinutes">Suggested interval. | Intervalo sugerido.</param>
+/// <param name="Urgency">How intrusive the reminder is. | Quão intrusivo é o lembrete.</param>
 public sealed record HabitDefinition(string Key, string Emoji, int DefaultMinutes, UrgencyLevel Urgency)
 {
-    /// <summary>Nome exibido, no idioma atual.</summary>
+    /// <summary>Display name in the current language. | Nome exibido no idioma atual.</summary>
     public string Name => Loc.Get($"Habit_{Key}_Name");
 
-    /// <summary>Descrição curta, no idioma atual.</summary>
+    /// <summary>Short description in the current language. | Descrição curta no idioma atual.</summary>
     public string Note => Loc.Get($"Habit_{Key}_Note");
 }
 
+/// <summary>The built-in daily reminders. | Os lembretes de dia a dia embutidos.</summary>
 public static class HabitCatalog
 {
-    /// <summary>Fora dessa faixa o lembrete não incomoda (madrugada).</summary>
+    /// <summary>Reminders stay quiet outside this daily range. | Fora desta faixa diária os lembretes ficam quietos.</summary>
     public static readonly TimeOnly WindowFrom = new(8, 0);
     public static readonly TimeOnly WindowTo = new(22, 0);
 
-    /// <summary>Parado tempo demais = você não está; o lembrete é pulado.</summary>
+    /// <summary>Idle this long means you're away; the reminder is skipped. | Parado por este tempo significa ausente; o lembrete é pulado.</summary>
     public static readonly TimeSpan SkipIfIdleFor = TimeSpan.FromMinutes(5);
 
+    /// <summary>All presets, in display order. | Todos os presets, na ordem de exibição.</summary>
     public static IReadOnlyList<HabitDefinition> All { get; } =
     [
         new("water", "💧", 45, UrgencyLevel.Whisper),
@@ -38,12 +36,13 @@ public static class HabitCatalog
         new("stretch", "🤸", 90, UrgencyLevel.Normal),
     ];
 
+    /// <summary>Finds a preset by key. | Encontra um preset pela chave.</summary>
     public static HabitDefinition? Find(string key) => All.FirstOrDefault(h => h.Key == key);
 
     /// <summary>
-    /// Monta o alarme de um hábito com o intervalo pedido. Preserva a âncora do
-    /// ciclo em curso (se houver) para não reiniciar a contagem a cada ajuste, e
-    /// o Id para atualizar no lugar em vez de duplicar.
+    /// Builds a habit's alarm at the given interval, keeping the running cycle's
+    /// anchor and id when possible. | Monta o alarme de um hábito no intervalo dado, preservando a âncora do ciclo
+    /// em curso e o id quando possível.
     /// </summary>
     public static Alarm BuildAlarm(
         HabitDefinition habit,

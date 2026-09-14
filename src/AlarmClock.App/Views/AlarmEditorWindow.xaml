@@ -10,9 +10,7 @@
         Background="{StaticResource Brush.Bg}"
         TextOptions.TextRenderingMode="ClearType">
 
-    <!-- Conteúdo rolável com as ações fixas embaixo. Com o modo "a cada" e a
-         faixa de horário abertos, o formulário passa da altura de uma tela de
-         768px, e um botão Salvar fora do alcance é um formulário quebrado. -->
+    <!-- Scrollable content with the actions fixed at the bottom. | Conteúdo rolável com as ações fixas embaixo. -->
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="*" />
@@ -41,7 +39,7 @@
             <RadioButton Style="{StaticResource Chip.Radio}" Content="{loc:Loc Editor_Interval}" IsChecked="{Binding IsInterval}" />
         </StackPanel>
 
-        <!-- Intervalo: o modo dos lembretes cíclicos (água, alongar, vista) -->
+        <!-- Interval mode (daily reminders) | Modo por intervalo (lembretes de dia a dia) -->
         <StackPanel Visibility="{Binding IsInterval, Converter={StaticResource BoolToVis}}" Margin="0,8,0,0">
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                 <TextBlock Style="{StaticResource Text.Body}" VerticalAlignment="Center" Text="{loc:Loc Editor_EveryPre}" />
@@ -78,7 +76,7 @@
                        Text="{loc:Loc Editor_MidnightNote}" />
         </StackPanel>
 
-        <!-- Dias da semana -->
+        <!-- Weekdays | Dias da semana -->
         <ItemsControl ItemsSource="{Binding Days}"
                       Margin="0,8,0,0"
                       Visibility="{Binding IsWeekly, Converter={StaticResource BoolToVis}}">
@@ -146,9 +144,7 @@
             </ItemsControl.ItemsPanel>
             <ItemsControl.ItemTemplate>
                 <DataTemplate>
-                    <!-- GroupName fixo: dentro de um ItemsControl os RadioButtons
-                         ficam em containers diferentes e sem isso não se
-                         desmarcam entre si. -->
+                    <!-- Shared GroupName so the radios deselect each other. | GroupName comum para os rádios se desmarcarem entre si. -->
                     <RadioButton Style="{StaticResource Chip.Radio}"
                                  GroupName="Urgencia"
                                  Content="{Binding Label}"

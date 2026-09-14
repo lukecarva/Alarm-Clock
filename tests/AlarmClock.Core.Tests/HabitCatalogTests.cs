@@ -41,7 +41,7 @@ public class HabitCatalogTests
         var maisTarde = Now.AddHours(3);
         var ajustado = HabitCatalog.BuildAlarm(agua, 30, maisTarde, original);
 
-        // Atualiza no lugar (mesmo Id), mas mudar o intervalo reinicia a âncora.
+        // Updates in place (same Id), but changing the interval resets the anchor. | Atualiza no lugar (mesmo Id), mas mudar o intervalo reinicia a âncora.
         Assert.Equal(original.Id, ajustado.Id);
         Assert.Equal(TimeSpan.FromMinutes(30), ((IntervalSchedule)ajustado.Schedule).Every);
         Assert.NotEqual(ancora, ((IntervalSchedule)ajustado.Schedule).Anchor);

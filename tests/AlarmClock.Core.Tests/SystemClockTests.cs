@@ -2,10 +2,7 @@ using AlarmClock.Core.Abstractions;
 
 namespace AlarmClock.Core.Tests;
 
-/// <summary>
-/// Testes de fumaça da Fase 0: garantem que a abstração de tempo se comporta
-/// como o agendador da Fase 1 vai assumir que ela se comporta.
-/// </summary>
+/// <summary>Smoke tests for the time abstraction. | Testes de fumaça da abstração de tempo.</summary>
 public class SystemClockTests
 {
     [Fact]

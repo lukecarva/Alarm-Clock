@@ -1,35 +1,28 @@
 namespace AlarmClock.Core.Scheduling;
 
 /// <summary>
-/// Converte uma hora de parede ("15 de outubro às 00:30") no instante absoluto
-/// correspondente. É aqui que o horário de verão é resolvido, num lugar só, em
-/// vez de em cada tipo de agenda.
+/// Resolves a wall-clock time into an absolute instant, handling DST. | Resolve uma hora de parede num instante absoluto, tratando o horário de verão.
 /// </summary>
 internal static class WallClock
 {
-    /// <summary>
-    /// Maior salto de horário de verão que se espera encontrar. Serve como
-    /// limite do laço que procura o fim do buraco da primavera.
-    /// </summary>
+    /// <summary>Upper bound for the loop that skips a spring-forward gap. | Limite do laço que pula o buraco da primavera.</summary>
     private const int MaxGapMinutes = 24 * 60;
 
+    /// <summary>
+    /// Converts a wall-clock time to an instant; on a nonexistent time fires at the
+    /// end of the gap, on an ambiguous time picks the first pass. | Converte uma hora de parede num instante; em hora inexistente dispara no fim
+    /// do buraco, em hora ambígua escolhe a primeira passagem.
+    /// </summary>
     public static DateTimeOffset Resolve(DateTime wall, TimeZoneInfo zone)
     {
         wall = DateTime.SpecifyKind(wall, DateTimeKind.Unspecified);
 
-        // Buraco da primavera: às 00:00 o relógio pula para 01:00 e a hora
-        // pedida simplesmente não existe naquele dia. Dispara no instante em
-        // que o relógio pula — adiantado por alguns minutos é muito melhor que
-        // não tocar.
         var guard = 0;
         while (zone.IsInvalidTime(wall) && guard++ < MaxGapMinutes)
         {
             wall = wall.AddMinutes(1);
         }
 
-        // Dobra do outono: a mesma hora de parede acontece duas vezes. Escolhe
-        // a primeira — que é a do maior offset, ainda no horário de verão —
-        // para o alarme não atrasar uma hora inteira.
         if (zone.IsAmbiguousTime(wall))
         {
             var offsets = zone.GetAmbiguousTimeOffsets(wall);
@@ -39,7 +32,7 @@ internal static class WallClock
         return new DateTimeOffset(wall, zone.GetUtcOffset(wall));
     }
 
-    /// <summary>Data de parede correspondente a um instante, no fuso dado.</summary>
+    /// <summary>Local wall-clock date of an instant in the given zone. | Data de parede de um instante no fuso informado.</summary>
     public static DateOnly LocalDate(DateTimeOffset instant, TimeZoneInfo zone) =>
         DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(instant, zone).DateTime);
 }

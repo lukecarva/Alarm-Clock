@@ -4,6 +4,7 @@ using AlarmClock.App.ViewModels;
 
 namespace AlarmClock.App.Views;
 
+/// <summary>The main window: alarms and daily-habits tabs. | A janela principal: abas de alarmes e de dia a dia.</summary>
 public partial class MainWindow : Window
 {
     private readonly MainViewModel _viewModel;
@@ -14,16 +15,11 @@ public partial class MainWindow : Window
         _viewModel = viewModel;
         DataContext = viewModel;
 
-        // A atualização periódica dos textos ("em 42 min") só roda com a janela
-        // visível — escondida na bandeja não há o que mostrar.
+        // Refresh the relative texts only while the window is visible. | Atualiza os textos relativos só enquanto a janela está visível.
         IsVisibleChanged += (_, e) => _viewModel.SetActive((bool)e.NewValue);
     }
 
-    /// <summary>
-    /// Fechar a janela esconde na bandeja em vez de encerrar. Sair de verdade é
-    /// pelo menu da bandeja — senão fica fácil demais desligar o despertador sem
-    /// perceber.
-    /// </summary>
+    /// <summary>Closing hides to the tray instead of quitting. | Fechar esconde na bandeja em vez de encerrar.</summary>
     protected override void OnClosing(CancelEventArgs e)
     {
         if (!App.IsShuttingDown)

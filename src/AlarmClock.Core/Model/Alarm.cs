@@ -3,67 +3,55 @@ using AlarmClock.Core.Scheduling;
 
 namespace AlarmClock.Core.Model;
 
-/// <summary>
-/// Um alarme: o que dizer, quando, e com quanta insistência.
-/// </summary>
+/// <summary>An alarm: what to say, when, and how insistently. | Um alarme: o que dizer, quando, e com quanta insistência.</summary>
 public sealed record Alarm
 {
+    /// <summary>Unique identifier. | Identificador único.</summary>
     public required Guid Id { get; init; }
 
-    /// <summary>Aparece grande no alerta. "Reunião com o time".</summary>
+    /// <summary>Shown large in the alert. | Aparece grande no alerta.</summary>
     public required string Title { get; init; }
 
-    /// <summary>Detalhe opcional, abaixo do título.</summary>
+    /// <summary>Optional detail below the title. | Detalhe opcional, abaixo do título.</summary>
     public string? Message { get; init; }
 
+    /// <summary>When the alarm fires. | Quando o alarme dispara.</summary>
     public required ISchedule Schedule { get; init; }
 
+    /// <summary>Urgency level. | Nível de urgência.</summary>
     public UrgencyLevel Urgency { get; init; } = UrgencyLevel.Normal;
 
-    /// <summary>Sobrescreve o som do nível de urgência. Nulo = usa o do perfil.</summary>
+    /// <summary>Overrides the level's sound with a file. Null = use the profile's. | Sobrescreve o som do nível por um arquivo. Nulo = usa o do perfil.</summary>
     public string? CustomSoundPath { get; init; }
 
-    /// <summary>Desligado continua salvo, só não é agendado.</summary>
+    /// <summary>Disabled alarms stay saved but are not scheduled. | Alarmes desligados continuam salvos, só não são agendados.</summary>
     public bool IsEnabled { get; init; } = true;
 
     /// <summary>
-    /// Marca um lembrete de "dia a dia" (água, levantar, olhos…) e diz qual.
-    /// Nulo = alarme comum, criado pelo usuário. É o que separa as duas abas:
-    /// a lista de alarmes esconde quem tem chave; a aba de hábitos cuida deles.
+    /// Marks a daily-habit reminder and which one; null = a normal user alarm. | Marca um lembrete de "dia a dia" e qual; nulo = alarme comum do usuário.
     /// </summary>
     public string? HabitKey { get; init; }
 
     /// <summary>
-    /// Pula o alerta se o teclado e o mouse estiverem parados há pelo menos este
-    /// tempo. Nulo = alerta sempre.
+    /// Skips the on-time alert when keyboard/mouse have been idle at least this long. | Pula o alerta na hora quando teclado/mouse estão parados há pelo menos este tempo.
     /// </summary>
-    /// <remarks>
-    /// Existe para os lembretes cíclicos: "beba água" a cada 45 minutos não pode
-    /// empilhar avisos numa cadeira vazia enquanto você almoça. Vale só para o
-    /// disparo na hora — alarme perdido continua governado pelo
-    /// <see cref="UrgencyProfile.WhenAway"/>, e adiamento é algo que você pediu
-    /// explicitamente, então não é descartado por ausência.
-    /// </remarks>
     public TimeSpan? SkipIfIdleFor { get; init; }
 
-    /// <summary>Faz o alarme subir de nível quando ignorado. Nulo = não escala.</summary>
+    /// <summary>Makes the alarm escalate when ignored. Null = no escalation. | Faz o alarme escalar quando ignorado. Nulo = sem escalada.</summary>
     public EscalationPolicy? Escalation { get; init; }
 
-    /// <remarks>
-    /// <see cref="JsonIgnore"/> é essencial: sem ele, cada alarme gravaria uma
-    /// cópia inteira do perfil de urgência no arquivo. Além de inchar o JSON,
-    /// isso desnormaliza justamente o que o desenho quer manter num lugar só —
-    /// e daria a falsa impressão de que editar aquele bloco muda o
-    /// comportamento, quando na leitura ele é ignorado.
-    /// </remarks>
+    /// <summary>
+    /// Urgency profile for this alarm; not serialized (derived from <see cref="Urgency"/>). | Perfil de urgência do alarme; não serializado (derivado de <see cref="Urgency"/>).
+    /// </summary>
     [JsonIgnore]
     public UrgencyProfile Profile => UrgencyProfiles.Get(Urgency);
 
-    /// <summary>Som efetivo: o do perfil, com o arquivo do usuário se houver.</summary>
+    /// <summary>Effective sound: the profile's, with the user's file if any. | Som efetivo: o do perfil, com o arquivo do usuário se houver.</summary>
     [JsonIgnore]
     public SoundSpec EffectiveSound =>
         CustomSoundPath is null ? Profile.Sound : Profile.Sound with { FilePath = CustomSoundPath, IsSilent = false };
 
+    /// <summary>Creates a new alarm with a fresh id. | Cria um alarme novo com id próprio.</summary>
     public static Alarm New(string title, ISchedule schedule, UrgencyLevel urgency = UrgencyLevel.Normal) => new()
     {
         Id = Guid.NewGuid(),

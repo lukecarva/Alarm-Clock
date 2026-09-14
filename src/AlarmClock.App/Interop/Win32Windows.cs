@@ -5,16 +5,7 @@ using System.Windows.Interop;
 
 namespace AlarmClock.App.Interop;
 
-/// <summary>
-/// Posicionamento de janela em pixels físicos.
-/// </summary>
-/// <remarks>
-/// WPF trabalha em DIPs e o WinForms <c>Screen</c> devolve pixels físicos.
-/// Converter entre os dois exige saber o DPI de cada monitor, e num setup com
-/// escalas diferentes por tela isso vira uma fonte permanente de janela meio
-/// fora do lugar. Falar direto com <c>SetWindowPos</c> resolve exato: o overlay
-/// cobre o monitor inteiro, ponto.
-/// </remarks>
+/// <summary>Positions windows in physical pixels via SetWindowPos. | Posiciona janelas em pixels físicos via SetWindowPos.</summary>
 internal static class Win32Windows
 {
     private const uint SwpNoActivate = 0x0010;
@@ -22,8 +13,6 @@ internal static class Win32Windows
 
     private static readonly IntPtr HwndTopmost = new(-1);
 
-    // DllImport, não LibraryImport: este último exige AllowUnsafeBlocks no
-    // projeto inteiro, e não vale habilitar unsafe por três P/Invoke triviais.
     [DllImport("user32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool SetWindowPos(
@@ -38,16 +27,17 @@ internal static class Win32Windows
     [DllImport("user32.dll")]
     private static extern uint GetDpiForWindow(IntPtr hWnd);
 
-    /// <summary>Garante o HWND mesmo antes de a janela aparecer.</summary>
+    /// <summary>Gets the window handle, creating it if needed. | Obtém o HWND da janela, criando-o se preciso.</summary>
     public static IntPtr HandleOf(Window window) => new WindowInteropHelper(window).EnsureHandle();
 
-    /// <summary>Fator de escala do monitor onde a janela está (1.0 = 96 DPI).</summary>
+    /// <summary>Scale factor of the window's monitor (1.0 = 96 DPI). | Fator de escala do monitor da janela (1.0 = 96 DPI).</summary>
     public static double ScaleOf(Window window)
     {
         var dpi = GetDpiForWindow(HandleOf(window));
         return dpi == 0 ? 1d : dpi / 96d;
     }
 
+    /// <summary>Places the window topmost at physical bounds. | Posiciona a janela como topmost nos limites físicos.</summary>
     public static void PlacePhysical(Window window, Rectangle bounds, bool activate)
     {
         var flags = SwpShowWindow | (activate ? 0 : SwpNoActivate);
@@ -63,14 +53,10 @@ internal static class Win32Windows
     }
 
     /// <summary>
-    /// Encosta a janela no canto inferior direito da área de trabalho da tela
-    /// principal, respeitando a barra de tarefas.
+    /// Docks the window at the bottom-right of the primary work area, using its
+    /// measured size. | Encosta a janela no canto inferior direito da área de trabalho principal,
+    /// usando o tamanho já medido.
     /// </summary>
-    /// <remarks>
-    /// Usa o tamanho já medido pelo WPF (<c>ActualWidth</c>/<c>ActualHeight</c>),
-    /// e não um tamanho fixo: com <c>SizeToContent</c>, a altura do card depende
-    /// de o alarme ter mensagem e de quantas opções de adiamento o nível oferece.
-    /// </remarks>
     public static void PlaceInCorner(Window window, int marginPx = 16)
     {
         var area = System.Windows.Forms.Screen.PrimaryScreen?.WorkingArea
@@ -86,8 +72,6 @@ internal static class Win32Windows
             largura,
             altura);
 
-        // Sem ativar: um card discreto no canto não deve roubar o cursor de
-        // quem está digitando.
         PlacePhysical(window, destino, activate: false);
     }
 }

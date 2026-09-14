@@ -4,7 +4,7 @@ using System.Windows.Data;
 
 namespace AlarmClock.App.Views;
 
-/// <summary>Some quando o valor é nulo ou uma string vazia.</summary>
+/// <summary>Collapses when the value is null or an empty string. | Some quando o valor é nulo ou string vazia.</summary>
 public sealed class NullToVisibilityConverter : IValueConverter
 {
     public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
@@ -17,7 +17,7 @@ public sealed class NullToVisibilityConverter : IValueConverter
         throw new NotSupportedException();
 }
 
-/// <summary>Inverte um booleano. Útil para habilitar controles por ausência de algo.</summary>
+/// <summary>Inverts a boolean. | Inverte um booleano.</summary>
 public sealed class InverseBooleanConverter : IValueConverter
 {
     public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture) =>

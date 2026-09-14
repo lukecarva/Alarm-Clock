@@ -10,8 +10,9 @@ using Microsoft.Win32;
 namespace AlarmClock.App.Services;
 
 /// <summary>
-/// Liga o agendador ao mundo real: o tique de um segundo e os eventos do
-/// Windows que invalidam qualquer conta de tempo feita antes deles.
+/// Connects the scheduler to the real world: the one-second tick and the Windows
+/// power/time events. | Liga o agendador ao mundo real: o tique de um segundo e os eventos de energia
+/// e de relógio do Windows.
 /// </summary>
 public sealed class SchedulerHost(
     IAlarmScheduler scheduler,
@@ -32,6 +33,7 @@ public sealed class SchedulerHost(
     private bool _hooked;
     private string? _ultimoStatus;
 
+    /// <summary>Loads alarms, starts the tick, and hooks system events. | Carrega alarmes, inicia o tique e engancha os eventos do sistema.</summary>
     public Task StartAsync(CancellationToken cancellationToken)
     {
         _scheduler.Triggered += OnTriggered;
@@ -40,9 +42,7 @@ public sealed class SchedulerHost(
         _alarms.Changed += OnAlarmsChanged;
         _scheduler.Reload(_alarms.Items);
 
-        // Um segundo. Não é polling caro: são algumas comparações de
-        // DateTimeOffset. O que se ganha é imunidade a hibernação — um timer
-        // longo simplesmente não dispara depois que o PC dorme.
+        // One-second tick: cheap, and immune to hibernation. | Tique de um segundo: barato, e imune a hibernação.
         _timer = new DispatcherTimer(DispatcherPriority.Normal, Application.Current.Dispatcher)
         {
             Interval = TimeSpan.FromSeconds(1),
@@ -68,6 +68,7 @@ public sealed class SchedulerHost(
         return Task.CompletedTask;
     }
 
+    /// <summary>Stops the tick and unhooks system events. | Para o tique e desengancha os eventos do sistema.</summary>
     public Task StopAsync(CancellationToken cancellationToken)
     {
         _timer?.Stop();
@@ -75,18 +76,20 @@ public sealed class SchedulerHost(
         return Task.CompletedTask;
     }
 
+    /// <summary>Reloads the scheduler when the alarm set changes. | Recarrega o agendador quando o conjunto de alarmes muda.</summary>
     private void OnAlarmsChanged(object? sender, EventArgs e)
     {
         _scheduler.Reload(_alarms.Items);
         AtualizarStatusDaBandeja();
     }
 
+    /// <summary>Shows the alert for a fired alarm. | Mostra o alerta de um alarme disparado.</summary>
     private void OnTriggered(object? sender, AlarmTriggeredEventArgs e)
     {
         _presenter.Show(e);
     }
 
-    /// <summary>Tooltip da bandeja. Só escreve quando o texto muda de verdade.</summary>
+    /// <summary>Updates the tray tooltip only when the text actually changes. | Atualiza o tooltip da bandeja só quando o texto muda de verdade.</summary>
     private void AtualizarStatusDaBandeja()
     {
         var proxima = _scheduler.NextFireTime;
@@ -104,6 +107,7 @@ public sealed class SchedulerHost(
         _tray.SetStatus(texto);
     }
 
+    /// <summary>On resume, ticks so catch-up runs for what came due while asleep. | Ao acordar, tica para o catch-up rodar sobre o que venceu dormindo.</summary>
     private void OnPowerModeChanged(object sender, PowerModeChangedEventArgs e)
     {
         if (e.Mode != PowerModes.Resume)
@@ -113,21 +117,18 @@ public sealed class SchedulerHost(
 
         _log.LogInformation("PC acordou. Avaliando o que venceu enquanto dormia.");
 
-        // Tick, e não Reload: é exatamente aqui que o catch-up precisa rodar e
-        // reportar o que passou. Reload jogaria os atrasos fora.
         Application.Current.Dispatcher.BeginInvoke(() => _scheduler.Tick());
     }
 
+    /// <summary>On a clock/zone change, reloads instead of firing a burst. | Numa mudança de relógio/fuso, recarrega em vez de disparar em rajada.</summary>
     private void OnTimeChanged(object? sender, EventArgs e)
     {
         _log.LogWarning("Relógio ou fuso do sistema mudou. Recalculando a agenda.");
 
-        // Aqui é Reload, e não Tick: o usuário mexeu no relógio de propósito.
-        // Disparar em rajada tudo que "venceu" com a conta nova seria pior que
-        // perder as ocorrências.
         Application.Current.Dispatcher.BeginInvoke(() => _scheduler.Reload(_alarms.Items));
     }
 
+    /// <summary>Unsubscribes from the static SystemEvents and service events. | Desinscreve dos SystemEvents estáticos e dos eventos do serviço.</summary>
     private void Unhook()
     {
         if (!_hooked)
@@ -135,7 +136,6 @@ public sealed class SchedulerHost(
             return;
         }
 
-        // SystemEvents são estáticos: sem desinscrever, o objeto vive para sempre.
         SystemEvents.PowerModeChanged -= OnPowerModeChanged;
         SystemEvents.TimeChanged -= OnTimeChanged;
         _alarms.Changed -= OnAlarmsChanged;

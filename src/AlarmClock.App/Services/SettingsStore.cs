@@ -4,21 +4,19 @@ using System.Text.Json;
 
 namespace AlarmClock.App.Services;
 
-/// <summary>Preferências do app. Poucas, num JSON à parte dos alarmes.</summary>
+/// <summary>App preferences, stored apart from the alarms. | Preferências do app, guardadas à parte dos alarmes.</summary>
 public sealed class AppSettings
 {
-    /// <summary>Código do idioma ("en" ou "pt-BR"). Nulo = decide pelo Windows.</summary>
+    /// <summary>Language code ("en" or "pt-BR"). Null = decide from Windows. | Código do idioma ("en" ou "pt-BR"). Nulo = decide pelo Windows.</summary>
     public string? Language { get; set; }
 }
 
-/// <summary>
-/// Lê e grava <c>settings.json</c>. Estático porque é lido no arranque, antes do
-/// contêiner de DI existir, e o instalador escreve o mesmo arquivo.
-/// </summary>
+/// <summary>Reads and writes <c>settings.json</c>. | Lê e grava <c>settings.json</c>.</summary>
 public static class SettingsStore
 {
     private static readonly JsonSerializerOptions Options = new() { WriteIndented = true };
 
+    /// <summary>Loads preferences, returning defaults if missing or unreadable. | Carrega as preferências, retornando o padrão se ausente ou ilegível.</summary>
     public static AppSettings Load()
     {
         try
@@ -31,12 +29,13 @@ public static class SettingsStore
         }
         catch (Exception ex) when (ex is IOException or JsonException)
         {
-            // Preferência corrompida não pode impedir o app de abrir: começa do padrão.
+            // Fall back to defaults on a corrupt file. | Cai para o padrão em arquivo corrompido.
         }
 
         return new AppSettings();
     }
 
+    /// <summary>Saves preferences atomically. | Salva as preferências de forma atômica.</summary>
     public static void Save(AppSettings settings)
     {
         AppPaths.EnsureCreated();

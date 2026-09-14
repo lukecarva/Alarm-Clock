@@ -1,36 +1,26 @@
 namespace AlarmClock.Core.Scheduling;
 
 /// <summary>
-/// A cada N minutos, opcionalmente só dentro de uma faixa de horário.
-/// É a agenda dos lembretes de saúde: beber água, levantar, descansar a vista.
+/// Fires every N minutes, optionally only within a daily time range. | Dispara a cada N minutos, opcionalmente só dentro de uma faixa de horário.
 /// </summary>
-/// <remarks>
-/// Diferente de <see cref="DailySchedule"/> e <see cref="WeeklySchedule"/>, esta
-/// agenda é de <b>duração absoluta</b>: "a cada 45 minutos" são 45 minutos reais,
-/// e a conta é feita em instantes, não em hora de parede. Na virada do horário de
-/// verão isso significa que o ciclo simplesmente continua — que é o
-/// comportamento certo. Só a <see cref="ActiveFrom"/>/<see cref="ActiveTo"/> é
-/// hora de parede, porque "só me lembre entre 9h e 18h" fala do relógio.
-/// </remarks>
-/// <param name="Every">Intervalo entre disparos.</param>
-/// <param name="Anchor">
-/// Instante em que o ciclo começou a contar. Guardado para o ritmo sobreviver a
-/// reinício do app: sem âncora, fechar e abrir o programa reiniciaria a contagem.
-/// </param>
-/// <param name="ActiveFrom">Início da faixa ativa. Nulo = o dia inteiro.</param>
-/// <param name="ActiveTo">Fim da faixa ativa (exclusivo).</param>
+/// <param name="Every">Interval between firings (absolute duration). | Intervalo entre disparos (duração absoluta).</param>
+/// <param name="Anchor">Instant the cycle started counting from. | Instante em que o ciclo começou a contar.</param>
+/// <param name="ActiveFrom">Start of the active range. Null = all day. | Início da faixa ativa. Nulo = o dia inteiro.</param>
+/// <param name="ActiveTo">End of the active range (exclusive). | Fim da faixa ativa (exclusivo).</param>
 public sealed record IntervalSchedule(
     TimeSpan Every,
     DateTimeOffset Anchor,
     TimeOnly? ActiveFrom = null,
     TimeOnly? ActiveTo = null) : ISchedule
 {
-    /// <summary>Limite do laço que procura a próxima abertura de janela.</summary>
+    /// <summary>Upper bound for the loop that seeks the next window opening. | Limite do laço que procura a próxima abertura de janela.</summary>
     private const int MaxWindowHops = 400;
 
+    /// <summary>Whether an active time range is set. | Se há uma faixa de horário definida.</summary>
     [System.Text.Json.Serialization.JsonIgnore]
     public bool HasWindow => ActiveFrom is not null && ActiveTo is not null;
 
+    /// <summary>Next firing after <paramref name="from"/>, skipping outside the range. | Próximo disparo depois de <paramref name="from"/>, pulando fora da faixa.</summary>
     public DateTimeOffset? NextOccurrenceAfter(DateTimeOffset from, TimeZoneInfo zone)
     {
         if (Every <= TimeSpan.Zero)
@@ -47,8 +37,6 @@ public sealed record IntervalSchedule(
                 return candidato;
             }
 
-            // Fora da faixa: pula para a próxima abertura e volta a encaixar no
-            // ritmo do ciclo, para os disparos não desalinharem dia após dia.
             var abertura = NextWindowOpening(candidato, zone);
             if (abertura is null)
             {
@@ -61,7 +49,7 @@ public sealed record IntervalSchedule(
         return null;
     }
 
-    /// <summary>Primeiro instante do ciclo estritamente depois de <paramref name="from"/>.</summary>
+    /// <summary>First cycle instant strictly after <paramref name="from"/>. | Primeiro instante do ciclo estritamente depois de <paramref name="from"/>.</summary>
     private DateTimeOffset AlignToGrid(DateTimeOffset from)
     {
         var decorrido = from - Anchor;
@@ -69,7 +57,6 @@ public sealed record IntervalSchedule(
 
         var candidato = Anchor + (Every * ciclos);
 
-        // Bordas de arredondamento: garante "estritamente depois".
         while (candidato <= from)
         {
             candidato += Every;
@@ -78,6 +65,7 @@ public sealed record IntervalSchedule(
         return candidato;
     }
 
+    /// <summary>Whether an instant falls inside the active range. | Se um instante cai dentro da faixa ativa.</summary>
     private bool IsInWindow(DateTimeOffset instant, TimeZoneInfo zone)
     {
         if (!HasWindow)
@@ -87,12 +75,13 @@ public sealed record IntervalSchedule(
 
         var hora = TimeOnly.FromDateTime(TimeZoneInfo.ConvertTime(instant, zone).DateTime);
 
-        // Faixa que atravessa a meia-noite (22:00–06:00) precisa da lógica ao contrário.
+        // Range crossing midnight (22:00-06:00) needs the inverted test. | Faixa que atravessa a meia-noite (22:00-06:00) precisa do teste invertido.
         return ActiveFrom!.Value <= ActiveTo!.Value
             ? hora >= ActiveFrom.Value && hora < ActiveTo.Value
             : hora >= ActiveFrom.Value || hora < ActiveTo.Value;
     }
 
+    /// <summary>Next time the active range opens after <paramref name="from"/>. | Próxima vez que a faixa ativa abre depois de <paramref name="from"/>.</summary>
     private DateTimeOffset? NextWindowOpening(DateTimeOffset from, TimeZoneInfo zone)
     {
         if (!HasWindow)
@@ -114,6 +103,7 @@ public sealed record IntervalSchedule(
         return null;
     }
 
+    /// <summary>Short text, e.g. "Every 45 min, 09:00 to 18:00". | Texto curto, ex.: "A cada 45 min, 09:00 às 18:00".</summary>
     public string Describe()
     {
         var texto = Localization.Loc.Format("Sched_Every", FormatEvery());
@@ -123,6 +113,7 @@ public sealed record IntervalSchedule(
             : texto;
     }
 
+    /// <summary>Formats the interval as "45 min", "1h" or "1h30". | Formata o intervalo como "45 min", "1h" ou "1h30".</summary>
     private string FormatEvery()
     {
         if (Every < TimeSpan.FromHours(1))

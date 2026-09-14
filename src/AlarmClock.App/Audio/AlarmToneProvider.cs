@@ -3,19 +3,17 @@ using NAudio.Wave;
 namespace AlarmClock.App.Audio;
 
 /// <summary>
-/// Sintetiza o toque padrão do despertador: bipe agudo, bipe grave, silêncio,
-/// repete. Gerar em vez de embutir um .wav evita arrastar áudio de terceiros
-/// para o repositório e deixa o intervalo entre repetições ser um parâmetro.
+/// Synthesizes the built-in alarm tone: high beep, low beep, silence, repeat. | Sintetiza o toque embutido do alarme: bipe agudo, bipe grave, silêncio, repete.
 /// </summary>
 public sealed class AlarmToneProvider : ISampleProvider
 {
     private const int SampleRate = 44_100;
     private const double Amplitude = 0.6;
 
-    /// <summary>Rampa de entrada e saída de cada bipe. Sem ela, cada bipe estala.</summary>
+    /// <summary>Fade-in/out length of each beep, to avoid clicks. | Duração do fade de cada bipe, para não estalar.</summary>
     private static readonly int RampSamples = SampleRate * 5 / 1000;
 
-    /// <summary>Frequência em Hz (0 = silêncio) e duração em milissegundos.</summary>
+    /// <summary>Beep frequency in Hz (0 = silence) and duration in ms. | Frequência do bipe em Hz (0 = silêncio) e duração em ms.</summary>
     private static readonly (double Hz, int Ms)[] Beeps =
     [
         (880, 150),
@@ -30,8 +28,8 @@ public sealed class AlarmToneProvider : ISampleProvider
     private long _position;
     private bool _finished;
 
-    /// <param name="gap">Silêncio entre uma repetição e a próxima.</param>
-    /// <param name="repeat">Falso toca uma vez só e termina.</param>
+    /// <param name="gap">Silence between one repeat and the next. | Silêncio entre uma repetição e a próxima.</param>
+    /// <param name="repeat">False plays once and ends. | Falso toca uma vez e termina.</param>
     public AlarmToneProvider(TimeSpan gap, bool repeat)
     {
         _repeat = repeat;
@@ -53,6 +51,7 @@ public sealed class AlarmToneProvider : ISampleProvider
 
     public WaveFormat WaveFormat { get; }
 
+    /// <summary>Fills the buffer with the tone, looping while repeating. | Preenche o buffer com o tom, repetindo em loop.</summary>
     public int Read(float[] buffer, int offset, int count)
     {
         if (_finished)
@@ -79,6 +78,7 @@ public sealed class AlarmToneProvider : ISampleProvider
         return count;
     }
 
+    /// <summary>Computes one sample at the given position in the cycle. | Calcula uma amostra na posição dada do ciclo.</summary>
     private float SampleAt(long position)
     {
         long inicio = 0;
@@ -104,7 +104,7 @@ public sealed class AlarmToneProvider : ISampleProvider
         return 0f;
     }
 
-    /// <summary>Rampa linear nas pontas do bipe, para não estalar.</summary>
+    /// <summary>Linear ramp at the beep edges, to avoid clicks. | Rampa linear nas pontas do bipe, para não estalar.</summary>
     private static double Envelope(long position, int length)
     {
         var rampa = Math.Min(RampSamples, length / 4);

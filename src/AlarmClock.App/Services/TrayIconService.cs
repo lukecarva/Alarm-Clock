@@ -9,11 +9,7 @@ using MainWindowView = AlarmClock.App.Views.MainWindow;
 
 namespace AlarmClock.App.Services;
 
-/// <summary>
-/// A bandeja é o modo de operação normal do app: a janela principal é opcional,
-/// o ícone é que fica. Construído em C# em vez de XAML de propósito — são três
-/// itens de menu, e assim não há surpresa de DataContext não propagado.
-/// </summary>
+/// <summary>Manages the tray icon and its context menu. | Gerencia o ícone da bandeja e seu menu de contexto.</summary>
 public sealed class TrayIconService(IServiceProvider services, ILogger<TrayIconService> log) : IDisposable
 {
     private readonly IServiceProvider _services = services;
@@ -22,6 +18,7 @@ public sealed class TrayIconService(IServiceProvider services, ILogger<TrayIconS
     private TaskbarIcon? _icon;
     private bool _disposed;
 
+    /// <summary>Creates and shows the tray icon. | Cria e mostra o ícone da bandeja.</summary>
     public void Show()
     {
         if (_icon is not null)
@@ -51,25 +48,19 @@ public sealed class TrayIconService(IServiceProvider services, ILogger<TrayIconS
 
         _icon.TrayMouseDoubleClick += (_, _) => ShowMainWindow();
 
-        // enablesEfficiencyMode: false é obrigatório aqui. O modo de eficiência
-        // (EcoQoS) deixa o Windows estrangular os timers do processo — que é
-        // exatamente o que não pode acontecer num despertador.
+        // enablesEfficiencyMode: false keeps Windows from throttling the timers. | enablesEfficiencyMode: false impede o Windows de estrangular os timers.
         _icon.ForceCreate(enablesEfficiencyMode: false);
 
         _log.LogInformation("Ícone da bandeja criado.");
     }
 
-    /// <summary>
-    /// Notificação nativa do Windows — o alerta do nível Sussurro. Sujeita ao
-    /// Assistente de Foco, que pode engoli-la sem avisar: é justamente por isso
-    /// que só o nível mais baixo usa este caminho.
-    /// </summary>
+    /// <summary>Shows a native Windows toast (the Whisper-level alert). | Mostra um toast nativo do Windows (o alerta do nível Sussurro).</summary>
     public void ShowBalloon(string title, string message)
     {
         _icon?.ShowNotification(title, message);
     }
 
-    /// <summary>Texto do tooltip: "Próximo: Reunião em 42 min".</summary>
+    /// <summary>Sets the tray tooltip text. | Define o texto do tooltip da bandeja.</summary>
     public void SetStatus(string text)
     {
         if (_icon is not null)
@@ -78,6 +69,7 @@ public sealed class TrayIconService(IServiceProvider services, ILogger<TrayIconS
         }
     }
 
+    /// <summary>Shows and activates the main window. | Mostra e ativa a janela principal.</summary>
     private void ShowMainWindow()
     {
         var window = _services.GetRequiredService<MainWindowView>();

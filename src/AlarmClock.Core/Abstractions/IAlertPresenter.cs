@@ -2,11 +2,9 @@ using AlarmClock.Core.Scheduling;
 
 namespace AlarmClock.Core.Abstractions;
 
-/// <summary>
-/// Põe um alarme na frente do usuário. O agendador só avisa que chegou a hora;
-/// como isso vira pixel na tela é problema da camada de UI.
-/// </summary>
+/// <summary>Shows a triggered alarm to the user. | Mostra ao usuário um alarme que disparou.</summary>
 public interface IAlertPresenter
 {
+    /// <summary>Presents the alert for the given trigger. | Apresenta o alerta do disparo informado.</summary>
     void Show(AlarmTriggeredEventArgs trigger);
 }

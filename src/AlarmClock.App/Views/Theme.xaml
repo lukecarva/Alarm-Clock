@@ -2,8 +2,7 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:views="clr-namespace:AlarmClock.App.Views">
 
-    <!-- Paleta. Escura de propósito: é um utilitário de bandeja que fica aberto
-         o dia inteiro, muitas vezes de madrugada. -->
+    <!-- Dark color palette. | Paleta de cores escura. -->
     <Color x:Key="Color.Bg">#FF14161A</Color>
     <Color x:Key="Color.Surface">#FF1C1F26</Color>
     <Color x:Key="Color.Border">#FF2A2F3A</Color>
@@ -20,8 +19,7 @@
 
     <FontFamily x:Key="Font.Ui">Segoe UI Variable Text, Segoe UI, sans-serif</FontFamily>
 
-    <!-- Cores dos níveis de urgência. Já definidas aqui para que os badges da
-         Fase 1 e as janelas de alerta usem exatamente a mesma escala. -->
+    <!-- Urgency level colors. | Cores dos níveis de urgência. -->
     <SolidColorBrush x:Key="Brush.Urgency.Whisper" Color="#FF5B8DEF" />
     <SolidColorBrush x:Key="Brush.Urgency.Normal" Color="#FF3FB950" />
     <SolidColorBrush x:Key="Brush.Urgency.High" Color="#FFE3903A" />
@@ -60,9 +58,7 @@
         <Setter Property="Padding" Value="20" />
     </Style>
 
-    <!-- Chips. O editor usa chips em vez de ComboBox e DatePicker: no tema
-         escuro esses dois exigem retemplatar o controle inteiro, e um alarme
-         não precisa de calendário para ser criado. -->
+    <!-- Chip controls (toggle and radio) for the dark theme. | Controles de chip (toggle e rádio) para o tema escuro. -->
     <ControlTemplate x:Key="Chip.Template" TargetType="ToggleButton">
         <Border x:Name="Root"
                 Background="Transparent"
@@ -218,8 +214,7 @@
         </Setter>
     </Style>
 
-    <!-- Abas planas para o tema escuro: cabeçalho de texto com um sublinhado da
-         cor de destaque na aba selecionada. O TabControl padrão vem claro. -->
+    <!-- Flat tabs for the dark theme, with an accent underline on the selected one. | Abas planas para o tema escuro, com sublinhado de destaque na selecionada. -->
     <Style x:Key="Tabs" TargetType="TabControl">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />

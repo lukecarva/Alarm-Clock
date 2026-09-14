@@ -1,18 +1,15 @@
 using System.Runtime.CompilerServices;
 using AlarmClock.Core.Localization;
 
-// Sem paralelismo: o idioma do Loc é estado global do processo, e o teste de
-// localização o alterna. Serial mantém tudo determinístico (a suíte é rápida).
+// No parallelism: the Loc language is global state that one test switches. | Sem paralelismo: o idioma do Loc é estado global que um teste alterna.
 [assembly: Xunit.CollectionBehavior(DisableTestParallelization = true)]
 
 namespace AlarmClock.Core.Tests;
 
+/// <summary>Test-run setup. | Configuração da execução dos testes.</summary>
 internal static class TestInit
 {
-    /// <summary>
-    /// Fixa o idioma em português antes de qualquer teste: as asserções de
-    /// texto (Describe, recusas de adiamento) foram escritas em pt-BR.
-    /// </summary>
+    /// <summary>Sets the language to Portuguese before any test runs. | Fixa o idioma em português antes de qualquer teste.</summary>
     [ModuleInitializer]
     internal static void Init() => Loc.Set(AppLanguage.Portuguese);
 }
