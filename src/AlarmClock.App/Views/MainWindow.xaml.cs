@@ -1,8 +1,6 @@
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Windows;
 using AlarmClock.App.ViewModels;
-using AlarmClock.Core.Localization;
 
 namespace AlarmClock.App.Views;
 
@@ -19,36 +17,6 @@ public partial class MainWindow : Window
         // A atualização periódica dos textos ("em 42 min") só roda com a janela
         // visível — escondida na bandeja não há o que mostrar.
         IsVisibleChanged += (_, e) => _viewModel.SetActive((bool)e.NewValue);
-
-        _viewModel.RestartRequested += OnRestartRequested;
-    }
-
-    /// <summary>
-    /// Troca de idioma pede reinício (o idioma é resolvido no arranque). Oferece
-    /// reiniciar agora; se recusar, aplica na próxima abertura.
-    /// </summary>
-    private void OnRestartRequested()
-    {
-        var reiniciar = MessageBox.Show(
-            this,
-            Loc.Get("Lang_RestartPrompt"),
-            Loc.Get("App_Name"),
-            MessageBoxButton.YesNo,
-            MessageBoxImage.Question,
-            MessageBoxResult.Yes) == MessageBoxResult.Yes;
-
-        if (!reiniciar)
-        {
-            return;
-        }
-
-        var exe = Environment.ProcessPath;
-        if (exe is not null)
-        {
-            Process.Start(new ProcessStartInfo { FileName = exe, UseShellExecute = true });
-        }
-
-        Application.Current.Shutdown();
     }
 
     /// <summary>

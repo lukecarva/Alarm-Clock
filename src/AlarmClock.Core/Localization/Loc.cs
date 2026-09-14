@@ -13,8 +13,8 @@ public enum AppLanguage
 /// Localização do app, em dois idiomas. É baseada em código (dois dicionários)
 /// em vez de .resx: para um app deste tamanho, evita satélites e problemas de
 /// geração de acessador fora do Visual Studio, e o conteúdo fica direto de
-/// revisar. O idioma é escolhido uma vez na inicialização; não há troca a
-/// quente (o app reinicia para aplicar).
+/// revisar. O idioma é escolhido na instalação e lido no arranque; não há troca
+/// pela interface.
 /// </summary>
 public static class Loc
 {
@@ -129,7 +129,6 @@ public static class Loc
         ["Main_OpenDataFolder"] = "Open data folder",
         ["Main_DataFolder"] = "Data and logs: {0}",
         ["Main_Version"] = "version {0}",
-        ["Lang_Label"] = "LANGUAGE",
 
         ["Editor_New"] = "New alarm",
         ["Editor_Edit"] = "Edit alarm",
@@ -175,7 +174,6 @@ public static class Loc
 
         ["Confirm_Delete"] = "Delete the alarm \"{0}\"?",
         ["Error_UIBody"] = "An unexpected UI error occurred. The alarm keeps running.\n\n{0}\n\nDetails at: {1}",
-        ["Lang_RestartPrompt"] = "Restart now to apply the new language?",
     };
 
     private static readonly Dictionary<string, string> Pt = new(StringComparer.Ordinal)
@@ -252,7 +250,6 @@ public static class Loc
         ["Main_OpenDataFolder"] = "Abrir pasta de dados",
         ["Main_DataFolder"] = "Dados e logs: {0}",
         ["Main_Version"] = "versão {0}",
-        ["Lang_Label"] = "IDIOMA",
 
         ["Editor_New"] = "Novo alarme",
         ["Editor_Edit"] = "Editar alarme",
@@ -298,6 +295,5 @@ public static class Loc
 
         ["Confirm_Delete"] = "Excluir o alarme \"{0}\"?",
         ["Error_UIBody"] = "Ocorreu um erro inesperado na interface. O despertador continua rodando.\n\n{0}\n\nDetalhes em: {1}",
-        ["Lang_RestartPrompt"] = "Reiniciar agora para aplicar o novo idioma?",
     };
 }

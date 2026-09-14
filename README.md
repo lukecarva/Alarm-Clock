@@ -28,8 +28,8 @@ frente do computador.
 - **Som com fade** — toque sintetizado embutido, ou um arquivo seu.
 - **Fica na bandeja** — fechar a janela esconde; sair é pelo menu do ícone.
 - **Início com o Windows** — opcional, via `HKCU` (sem admin).
-- **Bilíngue (PT-BR / English)** — o instalador pergunta o idioma e o app abre
-  nele; dá para trocar depois no rodapé (aplica ao reiniciar).
+- **Bilíngue (PT-BR / English)** — o idioma é escolhido na instalação e o app
+  abre nele.
 
 ### Níveis de urgência
 

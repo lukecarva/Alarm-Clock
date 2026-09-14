@@ -130,17 +130,9 @@
         <!-- Rodapé -->
         <StackPanel Grid.Row="2" Margin="0,18,0,0">
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                <RadioButton Style="{StaticResource Chip.Radio}"
-                             GroupName="Idioma"
-                             Content="Português"
-                             IsChecked="{Binding IsPortuguese}" />
-                <RadioButton Style="{StaticResource Chip.Radio}"
-                             GroupName="Idioma"
-                             Content="English"
-                             IsChecked="{Binding IsEnglish}" />
                 <ToggleButton Style="{StaticResource Chip.Toggle}"
                               VerticalAlignment="Center"
-                              Margin="8,0,8,6"
+                              Margin="0,0,8,6"
                               Content="{loc:Loc Main_StartWithWindows}"
                               IsChecked="{Binding StartWithWindows}" />
                 <Button Style="{StaticResource Button.Ghost}"
