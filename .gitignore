@@ -487,3 +487,7 @@ $RECYCLE.BIN/
 # casa tambem com o DIRETORIO src/AlarmClock.App e excluiria o projeto WPF
 # inteiro do repositorio. Reincluido explicitamente.
 !AlarmClock.App/
+
+# Artefatos do instalador (gerados por build/build-installer.ps1)
+/build/publish/
+/build/dist/

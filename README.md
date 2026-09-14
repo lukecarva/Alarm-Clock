@@ -31,7 +31,26 @@ O que falta está no [plano](docs/PLANO.md#fase-2--em-andamento).
 | Importante | Janela central, toque a cada 10s | Um clique. Adia 5 min, até 3x |
 | Crítico | Tela cheia em todos os monitores, som em loop | Segurar o botão 3s. Adia 2 min, uma vez só |
 
-## Rodando
+## Instalando
+
+Gere o instalador (setup.exe por usuário, sem admin, com o .NET embutido):
+
+```bash
+pwsh build/build-installer.ps1
+```
+
+Sai em `build/dist/DespertadorProdutivo-Setup-<versão>.exe`. Ele instala em
+`%LOCALAPPDATA%\Programs\Despertador Produtivo`, cria atalho no Menu Iniciar e
+oferece "iniciar com o Windows" e atalho na área de trabalho como opcionais. A
+desinstalação preserva seus dados em `%APPDATA%\AlarmClock`.
+
+Requer o [Inno Setup 6](https://jrsoftware.org/isinfo.php) uma única vez:
+
+```bash
+winget install JRSoftware.InnoSetup
+```
+
+## Rodando (desenvolvimento)
 
 ```bash
 dotnet run --project src/AlarmClock.App
