@@ -3,7 +3,7 @@
 ; Compile com: iscc build\installer.iss  (a partir da raiz do repositório)
 
 #define AppFolder "Despertador Produtivo"
-#define AppVersion "0.1.0"
+#define AppVersion "0.2.0"
 #define AppPublisher "Lucas"
 #define AppExe "DespertadorProdutivo.exe"
 

@@ -36,7 +36,7 @@
          this is a WPF app that uses WinForms only to enumerate screens (no message
          loop), so the manifest is the mechanism that actually applies. -->
     <NoWarn>$(NoWarn);WFAC010</NoWarn>
-    <Version>0.1.0</Version>
+    <Version>0.2.0</Version>
   </PropertyGroup>
 
   <!-- Ajustes de peso em execução. Um utilitário de bandeja quer o menor
