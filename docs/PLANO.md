@@ -241,10 +241,19 @@ Decisões tomadas durante a execução:
 - **Janelas de alerta são posicionadas em pixels físicos** via `SetWindowPos`.
   WPF trabalha em DIPs e o `Screen` do WinForms devolve pixels; converter entre
   os dois em multi-monitor com escalas diferentes é fonte permanente de janela
-  fora do lugar.
+  fora do lugar. O processo declara `PerMonitorV2` no `app.manifest`, então o
+  WPF reescala o conteúdo por monitor e o alerta fica nítido em qualquer tela.
 - **O card do canto usa `SizeToContent`.** Com altura fixa, os botões de adiar
   ficavam cortados quando o alarme tinha mensagem — foi o que a verificação
   pegou.
+- **Cards de canto simultâneos empilham.** Dois alarmes no mesmo minuto iam para
+  o mesmo canto e se cobriam; agora os cards abertos são mantidos numa pilha e
+  reposicionados de baixo para cima ao abrir e ao fechar.
+- **Adiamento e escalada são persistidos** (`scheduler-state.json`). Sem isso,
+  fechar o app no meio de uma soneca perdia o retorno; agora um adiamento que
+  vence com o app fechado dispara no primeiro tique ao reabrir, e a escalada
+  retoma do nível salvo. A política de escalada não é salva: é reanexada a
+  partir do alarme, sumindo se o alarme ou a política deixou de existir.
 - **Enums no JSON como texto** (`"Critical"`, não `3`): o arquivo só é editável
   à mão se der para entender o que está escrito nele.
 
@@ -264,8 +273,11 @@ acordar depois da hora e o alarme disparar com o resumo do atraso.
 - ⬜ **"Você está há 3h sem levantar"** — o outro lado da detecção de presença
 - ⬜ **Pomodoro / blocos de foco** com contagem regressiva
 - ⬜ **Estatísticas**: tempo no PC, alarmes atendidos vs. adiados vs. ignorados
-- ⬜ **Acordar o PC** para o alarme (`SetWaitableTimer` com wake, ou uma tarefa
-  no Agendador do Windows com *Wake the computer*)
+- ⬜ **Acordar o PC** para o alarme (`SetWaitableTimer` com `fResume`, ou uma
+  tarefa no Agendador do Windows com *Wake the computer*). Feature nova, não
+  bug: depende da política de energia ("permitir timers de ativação", muitas
+  vezes desligada no laptop na bateria) e só se valida suspendendo a máquina de
+  verdade. Adiado de propósito por isso.
 - ⬜ Modo Não Perturbe com janelas de horário; importar/exportar
 
 Decisões da parte já feita:
