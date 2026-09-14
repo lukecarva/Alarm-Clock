@@ -138,7 +138,6 @@ public static class Loc
         ["Main_EmptyBody"] = "Create your first and pick an urgency level. Whisper is a silent toast; Critical covers the whole screen and only leaves with a deliberate action.",
         ["Main_EmptyTray"] = "Closing this window doesn't quit the app. It stays in the tray.",
         ["Main_StartWithWindows"] = "Start with Windows",
-        ["Main_OpenDataFolder"] = "Open data folder",
         ["Main_Version"] = "version {0}",
 
         ["Editor_New"] = "New alarm",
@@ -273,7 +272,6 @@ public static class Loc
         ["Main_EmptyBody"] = "Crie o primeiro e escolha o nível de urgência. Sussurro é um toast silencioso; Crítico cobre a tela inteira e só sai com uma ação deliberada.",
         ["Main_EmptyTray"] = "Fechar esta janela não encerra o app. Ele continua na bandeja.",
         ["Main_StartWithWindows"] = "Iniciar com o Windows",
-        ["Main_OpenDataFolder"] = "Abrir pasta de dados",
         ["Main_Version"] = "versão {0}",
 
         ["Editor_New"] = "Novo alarme",

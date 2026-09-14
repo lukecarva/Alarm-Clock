@@ -212,14 +212,9 @@
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                 <ToggleButton Style="{StaticResource Chip.Toggle}"
                               VerticalAlignment="Center"
-                              Margin="0,0,8,6"
+                              Margin="0,0,0,6"
                               Content="{loc:Loc Main_StartWithWindows}"
                               IsChecked="{Binding StartWithWindows}" />
-                <Button Style="{StaticResource Button.Ghost}"
-                        VerticalAlignment="Center"
-                        Margin="0,0,0,6"
-                        Content="{loc:Loc Main_OpenDataFolder}"
-                        Command="{Binding OpenDataFolderCommand}" />
             </StackPanel>
 
             <StackPanel Margin="0,4,0,0">

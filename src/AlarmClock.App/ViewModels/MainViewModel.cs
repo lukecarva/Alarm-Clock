@@ -1,5 +1,4 @@
 using System.Collections.ObjectModel;
-using System.Diagnostics;
 using System.Reflection;
 using System.Windows.Threading;
 using AlarmClock.App.Services;
@@ -127,20 +126,6 @@ public sealed partial class MainViewModel : ObservableObject
         }
 
         _alarms.Remove(row.Alarm.Id);
-    }
-
-    /// <summary>Opens the data folder in Explorer. | Abre a pasta de dados no Explorer.</summary>
-    [RelayCommand]
-    private void OpenDataFolder()
-    {
-        AppPaths.EnsureCreated();
-        _log.LogInformation("Abrindo a pasta de dados no Explorer.");
-
-        Process.Start(new ProcessStartInfo
-        {
-            FileName = AppPaths.Root,
-            UseShellExecute = true,
-        });
     }
 
     /// <summary>Rebuilds the alarm and habit rows from the service state. | Reconstrói as linhas de alarme e de hábito a partir do estado do serviço.</summary>
