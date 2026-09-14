@@ -1,4 +1,5 @@
 using AlarmClock.Core.Abstractions;
+using AlarmClock.Core.Localization;
 using AlarmClock.Core.Model;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -168,7 +169,7 @@ public sealed class AlarmScheduler : IAlarmScheduler
         {
             if (!_alarms.TryGetValue(alarmId, out var alarm))
             {
-                refusal = "Este alarme não existe mais.";
+                refusal = Loc.Get("Snooze_NotFound");
                 return false;
             }
 
@@ -181,7 +182,7 @@ public sealed class AlarmScheduler : IAlarmScheduler
 
             if (!policy.IsEnabled)
             {
-                refusal = $"O nível {perfil.DisplayName} não permite adiar.";
+                refusal = Loc.Format("Snooze_NotAllowed", Loc.UrgencyName(nivel));
                 return false;
             }
 
@@ -189,8 +190,8 @@ public sealed class AlarmScheduler : IAlarmScheduler
             if (usados >= policy.MaxCount)
             {
                 refusal = policy.MaxCount == 1
-                    ? "Você já adiou este alarme uma vez."
-                    : $"Limite de {policy.MaxCount} adiamentos atingido.";
+                    ? Loc.Get("Snooze_Once")
+                    : Loc.Format("Snooze_Max", policy.MaxCount);
 
                 return false;
             }

@@ -1,4 +1,4 @@
-using System.Globalization;
+using AlarmClock.Core.Localization;
 
 namespace AlarmClock.Core.Scheduling;
 
@@ -11,8 +11,13 @@ public sealed record OneTimeSchedule(DateTimeOffset At) : ISchedule
     public DateTimeOffset? NextOccurrenceAfter(DateTimeOffset from, TimeZoneInfo zone) =>
         At > from ? At : null;
 
-    public string Describe() =>
-        At.ToLocalTime().ToString("dd/MM/yyyy 'às' HH:mm", new CultureInfo("pt-BR"));
+    public string Describe()
+    {
+        var local = At.ToLocalTime();
+        var data = local.ToString(Loc.Get("Fmt_DateLong"), Loc.Culture);
+        var hora = local.ToString("HH:mm", Loc.Culture);
+        return $"{data} {Loc.Get("Sched_At")} {hora}";
+    }
 }
 
 /// <summary>Todo dia na mesma hora de parede.</summary>
@@ -36,7 +41,7 @@ public sealed record DailySchedule(TimeOnly At) : ISchedule
         return null;
     }
 
-    public string Describe() => $"Todo dia, {At:HH\\:mm}";
+    public string Describe() => Loc.Format("Sched_EveryDay", At.ToString("HH\\:mm", Loc.Culture));
 }
 
 /// <summary>Nos dias da semana escolhidos, sempre na mesma hora de parede.</summary>
@@ -72,27 +77,26 @@ public sealed record WeeklySchedule(WeekDays Days, TimeOnly At) : ISchedule
 
     public string Describe()
     {
-        var hora = At.ToString("HH\\:mm");
+        var hora = At.ToString("HH\\:mm", Loc.Culture);
 
         if (Days == WeekDays.Every)
         {
-            return $"Todo dia, {hora}";
+            return Loc.Format("Sched_EveryDay", hora);
         }
 
         if (Days == WeekDays.Weekdays)
         {
-            return $"Dias úteis, {hora}";
+            return Loc.Format("Sched_Weekdays", hora);
         }
 
         if (Days == WeekDays.Weekend)
         {
-            return $"Fim de semana, {hora}";
+            return Loc.Format("Sched_Weekend", hora);
         }
 
-        string[] siglas = ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"];
         var dias = Enumerable.Range(0, 7)
             .Where(i => Days.Includes((DayOfWeek)i))
-            .Select(i => siglas[i]);
+            .Select(i => Loc.Get($"Day_{i}"));
 
         return $"{string.Join(", ", dias)}, {hora}";
     }

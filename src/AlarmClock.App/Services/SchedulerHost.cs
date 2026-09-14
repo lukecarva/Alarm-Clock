@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Threading;
 using AlarmClock.Core.Abstractions;
+using AlarmClock.Core.Localization;
 using AlarmClock.Core.Scheduling;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -91,8 +92,8 @@ public sealed class SchedulerHost(
         var proxima = _scheduler.NextFireTime;
 
         var texto = proxima is null
-            ? "Despertador Produtivo, nenhum alarme ativo"
-            : $"Próximo alarme {TimeFormat.Relative(proxima.Value, _clock)}";
+            ? Loc.Format("Tray_Idle", Loc.Get("App_Name"))
+            : Loc.Format("Status_NextPrefix", TimeFormat.Relative(proxima.Value, _clock));
 
         if (texto == _ultimoStatus)
         {

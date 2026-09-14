@@ -1,6 +1,7 @@
 <Window x:Class="AlarmClock.App.Views.AlarmEditorWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:loc="clr-namespace:AlarmClock.App.Localization"
         Title="{Binding WindowTitle}"
         Width="520"
         SizeToContent="Height"
@@ -11,7 +12,7 @@
 
     <!-- Conteúdo rolável com as ações fixas embaixo. Com o modo "a cada" e a
          faixa de horário abertos, o formulário passa da altura de uma tela de
-         768px — e um botão Salvar fora do alcance é um formulário quebrado. -->
+         768px, e um botão Salvar fora do alcance é um formulário quebrado. -->
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="*" />
@@ -23,49 +24,49 @@
 
         <TextBlock Style="{StaticResource Text.Title}" Text="{Binding WindowTitle}" Margin="0,0,0,20" />
 
-        <TextBlock Style="{StaticResource Text.Label}" Text="NOME" />
+        <TextBlock Style="{StaticResource Text.Label}" Text="{loc:Loc Editor_Name}" />
         <TextBox Style="{StaticResource Field.Text}"
                  AutomationProperties.AutomationId="CampoNome"
                  Text="{Binding Title, UpdateSourceTrigger=PropertyChanged}" />
 
-        <TextBlock Style="{StaticResource Text.Label}" Text="DETALHE (OPCIONAL)" Margin="0,16,0,6" />
+        <TextBlock Style="{StaticResource Text.Label}" Text="{loc:Loc Editor_Detail}" Margin="0,16,0,6" />
         <TextBox Style="{StaticResource Field.Text}"
                  Text="{Binding Message, UpdateSourceTrigger=PropertyChanged}" />
 
-        <TextBlock Style="{StaticResource Text.Label}" Text="QUANDO" Margin="0,20,0,6" />
+        <TextBlock Style="{StaticResource Text.Label}" Text="{loc:Loc Editor_When}" Margin="0,20,0,6" />
         <StackPanel Orientation="Horizontal">
-            <RadioButton Style="{StaticResource Chip.Radio}" Content="Uma vez" IsChecked="{Binding IsOnce}" />
-            <RadioButton Style="{StaticResource Chip.Radio}" Content="Todo dia" IsChecked="{Binding IsDaily}" />
-            <RadioButton Style="{StaticResource Chip.Radio}" Content="Dias da semana" IsChecked="{Binding IsWeekly}" />
-            <RadioButton Style="{StaticResource Chip.Radio}" Content="A cada…" IsChecked="{Binding IsInterval}" />
+            <RadioButton Style="{StaticResource Chip.Radio}" Content="{loc:Loc Editor_Once}" IsChecked="{Binding IsOnce}" />
+            <RadioButton Style="{StaticResource Chip.Radio}" Content="{loc:Loc Editor_Daily}" IsChecked="{Binding IsDaily}" />
+            <RadioButton Style="{StaticResource Chip.Radio}" Content="{loc:Loc Editor_Weekly}" IsChecked="{Binding IsWeekly}" />
+            <RadioButton Style="{StaticResource Chip.Radio}" Content="{loc:Loc Editor_Interval}" IsChecked="{Binding IsInterval}" />
         </StackPanel>
 
         <!-- Intervalo: o modo dos lembretes cíclicos (água, alongar, vista) -->
         <StackPanel Visibility="{Binding IsInterval, Converter={StaticResource BoolToVis}}" Margin="0,8,0,0">
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                <TextBlock Style="{StaticResource Text.Body}" VerticalAlignment="Center" Text="A cada" />
+                <TextBlock Style="{StaticResource Text.Body}" VerticalAlignment="Center" Text="{loc:Loc Editor_EveryPre}" />
                 <TextBox Style="{StaticResource Field.Text}"
                          AutomationProperties.AutomationId="CampoIntervalo"
                          Width="70"
                          Margin="8,0"
                          Text="{Binding IntervalMinutesText, UpdateSourceTrigger=PropertyChanged}" />
-                <TextBlock Style="{StaticResource Text.Body}" VerticalAlignment="Center" Text="minutos" />
+                <TextBlock Style="{StaticResource Text.Body}" VerticalAlignment="Center" Text="{loc:Loc Editor_Minutes}" />
             </StackPanel>
 
             <ToggleButton Style="{StaticResource Chip.Toggle}"
                           Margin="0,10,0,0"
                           HorizontalAlignment="Left"
-                          Content="Só dentro de uma faixa de horário"
+                          Content="{loc:Loc Editor_WindowToggle}"
                           IsChecked="{Binding UseWindow}" />
 
             <StackPanel Orientation="Horizontal"
                         Visibility="{Binding UseWindow, Converter={StaticResource BoolToVis}}">
-                <TextBlock Style="{StaticResource Text.Body}" VerticalAlignment="Center" Text="das" />
+                <TextBlock Style="{StaticResource Text.Body}" VerticalAlignment="Center" Text="{loc:Loc Editor_From}" />
                 <TextBox Style="{StaticResource Field.Text}"
                          Width="80"
                          Margin="8,0"
                          Text="{Binding WindowFromText, UpdateSourceTrigger=PropertyChanged}" />
-                <TextBlock Style="{StaticResource Text.Body}" VerticalAlignment="Center" Text="às" />
+                <TextBlock Style="{StaticResource Text.Body}" VerticalAlignment="Center" Text="{loc:Loc Editor_To}" />
                 <TextBox Style="{StaticResource Field.Text}"
                          Width="80"
                          Margin="8,0,0,0"
@@ -74,7 +75,7 @@
 
             <TextBlock Style="{StaticResource Text.Caption}"
                        Margin="0,8,0,0"
-                       Text="A faixa pode atravessar a meia-noite, como 22:00 às 06:00." />
+                       Text="{loc:Loc Editor_MidnightNote}" />
         </StackPanel>
 
         <!-- Dias da semana -->
@@ -106,37 +107,37 @@
             <StackPanel Grid.Column="0"
                         Margin="0,0,14,0"
                         Visibility="{Binding IsOnce, Converter={StaticResource BoolToVis}}">
-                <TextBlock Style="{StaticResource Text.Label}" Text="DATA" />
+                <TextBlock Style="{StaticResource Text.Label}" Text="{loc:Loc Editor_Date}" />
                 <TextBox Style="{StaticResource Field.Text}"
                          Width="120"
                          Text="{Binding DateText, UpdateSourceTrigger=PropertyChanged}" />
             </StackPanel>
 
             <StackPanel Grid.Column="1" Visibility="{Binding HasFixedTime, Converter={StaticResource BoolToVis}}">
-                <TextBlock Style="{StaticResource Text.Label}" Text="HORA" />
+                <TextBlock Style="{StaticResource Text.Label}" Text="{loc:Loc Editor_Time}" />
                 <TextBox Style="{StaticResource Field.Text}"
                          Width="90"
                          Text="{Binding TimeText, UpdateSourceTrigger=PropertyChanged}" />
             </StackPanel>
         </Grid>
 
-        <TextBlock Style="{StaticResource Text.Label}" Text="PRESENÇA" Margin="0,20,0,6" />
+        <TextBlock Style="{StaticResource Text.Label}" Text="{loc:Loc Editor_Presence}" Margin="0,20,0,6" />
         <ToggleButton Style="{StaticResource Chip.Toggle}"
                       HorizontalAlignment="Left"
-                      Content="Não alertar se eu estiver ausente"
+                      Content="{loc:Loc Editor_SkipAway}"
                       IsChecked="{Binding SkipWhenAway}" />
         <TextBlock Style="{StaticResource Text.Caption}"
-                   Text="Pula o alerta se o teclado e o mouse estiverem parados há mais de 5 minutos. Vale para o disparo na hora. Alarme perdido e adiamento seguem as regras do nível." />
+                   Text="{loc:Loc Editor_SkipAwayNote}" />
 
-        <TextBlock Style="{StaticResource Text.Label}" Text="INSISTÊNCIA" Margin="0,20,0,6" />
+        <TextBlock Style="{StaticResource Text.Label}" Text="{loc:Loc Editor_Insistence}" Margin="0,20,0,6" />
         <ToggleButton Style="{StaticResource Chip.Toggle}"
                       HorizontalAlignment="Left"
-                      Content="Subir de nível se eu ignorar"
+                      Content="{loc:Loc Editor_Escalate}"
                       IsChecked="{Binding Escalate}" />
         <TextBlock Style="{StaticResource Text.Caption}"
-                   Text="Ignorado por 10 minutos ou adiado 2 vezes, o alarme volta um nível acima, até chegar a Crítico. Dispensar de vez encerra a escalada." />
+                   Text="{loc:Loc Editor_EscalateNote}" />
 
-        <TextBlock Style="{StaticResource Text.Label}" Text="URGÊNCIA" Margin="0,20,0,6" />
+        <TextBlock Style="{StaticResource Text.Label}" Text="{loc:Loc Editor_Urgency}" Margin="0,20,0,6" />
         <ItemsControl ItemsSource="{Binding Urgencies}">
             <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>
@@ -156,7 +157,7 @@
             </ItemsControl.ItemTemplate>
         </ItemsControl>
 
-        <TextBlock Style="{StaticResource Text.Label}" Text="SOM (OPCIONAL)" Margin="0,14,0,6" />
+        <TextBlock Style="{StaticResource Text.Label}" Text="{loc:Loc Editor_Sound}" Margin="0,14,0,6" />
         <Grid>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
@@ -170,17 +171,17 @@
             <Button Grid.Column="1"
                     Style="{StaticResource Button.Ghost}"
                     Margin="8,0,0,0"
-                    Content="Escolher…"
+                    Content="{loc:Loc Editor_SoundChoose}"
                     Command="{Binding BrowseSoundCommand}" />
             <Button Grid.Column="2"
                     Style="{StaticResource Button.Ghost}"
                     Margin="6,0,0,0"
-                    Content="Limpar"
+                    Content="{loc:Loc Editor_SoundClear}"
                     Command="{Binding ClearSoundCommand}" />
         </Grid>
         <TextBlock Style="{StaticResource Text.Caption}"
                    Margin="0,6,0,0"
-                   Text="Vazio usa o toque interno do app." />
+                   Text="{loc:Loc Editor_SoundNote}" />
 
         </StackPanel>
         </ScrollViewer>
@@ -190,11 +191,11 @@
                     HorizontalAlignment="Right"
                     Margin="24,18,24,24">
             <Button Style="{StaticResource Button.Ghost}"
-                    Content="Cancelar"
+                    Content="{loc:Loc Editor_Cancel}"
                     Margin="0,0,8,0"
                     Command="{Binding CancelCommand}" />
             <Button Style="{StaticResource Button.Primary}"
-                    Content="Salvar"
+                    Content="{loc:Loc Editor_Save}"
                     Command="{Binding SaveCommand}"
                     IsDefault="True" />
         </StackPanel>

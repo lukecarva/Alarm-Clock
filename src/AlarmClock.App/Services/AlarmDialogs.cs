@@ -2,6 +2,7 @@ using System.Windows;
 using AlarmClock.App.ViewModels;
 using AlarmClock.App.Views;
 using AlarmClock.Core.Abstractions;
+using AlarmClock.Core.Localization;
 using AlarmClock.Core.Model;
 
 namespace AlarmClock.App.Services;
@@ -32,8 +33,8 @@ public sealed class AlarmDialogs
     public bool ConfirmDelete(string titulo)
     {
         var resposta = MessageBox.Show(
-            $"Excluir o alarme \"{titulo}\"?",
-            "Despertador Produtivo",
+            Loc.Format("Confirm_Delete", titulo),
+            Loc.Get("App_Name"),
             MessageBoxButton.YesNo,
             MessageBoxImage.Question,
             MessageBoxResult.No);

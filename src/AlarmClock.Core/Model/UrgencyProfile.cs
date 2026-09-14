@@ -118,8 +118,6 @@ public sealed record UrgencyProfile
 {
     public required UrgencyLevel Level { get; init; }
 
-    public required string DisplayName { get; init; }
-
     public required PresentationMode Presentation { get; init; }
 
     public required SoundSpec Sound { get; init; }
@@ -148,7 +146,6 @@ public static class UrgencyProfiles
         [UrgencyLevel.Whisper] = new UrgencyProfile
         {
             Level = UrgencyLevel.Whisper,
-            DisplayName = "Sussurro",
             Presentation = PresentationMode.Toast,
             Sound = SoundSpec.Silent,
             AutoDismissAfter = TimeSpan.FromSeconds(7),
@@ -160,7 +157,6 @@ public static class UrgencyProfiles
         [UrgencyLevel.Normal] = new UrgencyProfile
         {
             Level = UrgencyLevel.Normal,
-            DisplayName = "Normal",
             Presentation = PresentationMode.Corner,
             Sound = new SoundSpec { Volume = 0.5 },
             AutoDismissAfter = TimeSpan.FromSeconds(30),
@@ -176,7 +172,6 @@ public static class UrgencyProfiles
         [UrgencyLevel.High] = new UrgencyProfile
         {
             Level = UrgencyLevel.High,
-            DisplayName = "Importante",
             Presentation = PresentationMode.Modal,
             Sound = new SoundSpec { Volume = 0.7, RepeatEvery = TimeSpan.FromSeconds(10) },
             AutoDismissAfter = null,
@@ -188,7 +183,6 @@ public static class UrgencyProfiles
         [UrgencyLevel.Critical] = new UrgencyProfile
         {
             Level = UrgencyLevel.Critical,
-            DisplayName = "Crítico",
             Presentation = PresentationMode.Fullscreen,
             Sound = new SoundSpec { Volume = 1.0, Loop = true, FadeIn = TimeSpan.FromSeconds(5) },
             AutoDismissAfter = null,

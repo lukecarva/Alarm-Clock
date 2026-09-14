@@ -1,5 +1,6 @@
 using System.Globalization;
 using AlarmClock.Core.Abstractions;
+using AlarmClock.Core.Localization;
 using AlarmClock.Core.Model;
 using AlarmClock.Core.Scheduling;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -31,7 +32,7 @@ public sealed partial class UrgencyChoice : ObservableObject
 {
     public required UrgencyProfile Profile { get; init; }
 
-    public string Label => Profile.DisplayName;
+    public string Label => Loc.UrgencyName(Profile.Level);
 
     [ObservableProperty]
     private bool _isChecked;
@@ -39,12 +40,15 @@ public sealed partial class UrgencyChoice : ObservableObject
 
 public sealed partial class AlarmEditorViewModel : ObservableObject
 {
-    private static readonly CultureInfo PtBr = TimeFormat.PtBr;
-
     /// <summary>
     /// Quanto tempo de teclado e mouse parados já conta como "não estou aqui".
     /// </summary>
     private static readonly TimeSpan IdleThreshold = TimeSpan.FromMinutes(5);
+
+    private static CultureInfo Culture => Loc.Culture;
+
+    /// <summary>Padrão de data do idioma atual (dd/MM/yyyy ou MM/dd/yyyy).</summary>
+    private static string DatePattern => Loc.Get("Fmt_DateLong");
 
     private readonly ISystemClock _clock;
     private readonly Guid _id;
@@ -64,13 +68,13 @@ public sealed partial class AlarmEditorViewModel : ObservableObject
 
         Days =
         [
-            new DayToggle { Flag = WeekDays.Monday, Label = "seg" },
-            new DayToggle { Flag = WeekDays.Tuesday, Label = "ter" },
-            new DayToggle { Flag = WeekDays.Wednesday, Label = "qua" },
-            new DayToggle { Flag = WeekDays.Thursday, Label = "qui" },
-            new DayToggle { Flag = WeekDays.Friday, Label = "sex" },
-            new DayToggle { Flag = WeekDays.Saturday, Label = "sáb" },
-            new DayToggle { Flag = WeekDays.Sunday, Label = "dom" },
+            new DayToggle { Flag = WeekDays.Monday, Label = Loc.Get("Day_1") },
+            new DayToggle { Flag = WeekDays.Tuesday, Label = Loc.Get("Day_2") },
+            new DayToggle { Flag = WeekDays.Wednesday, Label = Loc.Get("Day_3") },
+            new DayToggle { Flag = WeekDays.Thursday, Label = Loc.Get("Day_4") },
+            new DayToggle { Flag = WeekDays.Friday, Label = Loc.Get("Day_5") },
+            new DayToggle { Flag = WeekDays.Saturday, Label = Loc.Get("Day_6") },
+            new DayToggle { Flag = WeekDays.Sunday, Label = Loc.Get("Day_0") },
         ];
 
         Urgencies = [.. UrgencyProfiles.All.Select(p => new UrgencyChoice { Profile = p })];
@@ -79,8 +83,8 @@ public sealed partial class AlarmEditorViewModel : ObservableObject
         // vez já nasce depois de agora, em vez de cair na validação de "já
         // passou". Arredondado para o próximo múltiplo de 5 min por estética.
         var sugestao = ProximoHorarioRedondo(_clock);
-        _dateText = sugestao.ToString("dd/MM/yyyy", PtBr);
-        _timeText = sugestao.ToString("HH:mm", PtBr);
+        _dateText = sugestao.ToString(DatePattern, Culture);
+        _timeText = sugestao.ToString("HH:mm", Culture);
 
         if (existente is null)
         {
@@ -107,7 +111,7 @@ public sealed partial class AlarmEditorViewModel : ObservableObject
 
     public bool IsNew { get; }
 
-    public string WindowTitle => IsNew ? "Novo alarme" : "Editar alarme";
+    public string WindowTitle => Loc.Get(IsNew ? "Editor_New" : "Editor_Edit");
 
     public IReadOnlyList<DayToggle> Days { get; }
 
@@ -228,7 +232,7 @@ public sealed partial class AlarmEditorViewModel : ObservableObject
     {
         if (!TryBuild(out var alarme, out var erro))
         {
-            ValidationFailed?.Invoke(erro ?? "Não foi possível salvar o alarme.");
+            ValidationFailed?.Invoke(erro ?? Loc.Get("Val_SaveFailed"));
             return;
         }
 
@@ -244,8 +248,8 @@ public sealed partial class AlarmEditorViewModel : ObservableObject
     {
         var dialogo = new Microsoft.Win32.OpenFileDialog
         {
-            Title = "Som do alarme",
-            Filter = "Áudio (*.wav;*.mp3;*.m4a;*.wma)|*.wav;*.mp3;*.m4a;*.wma|Todos os arquivos|*.*",
+            Title = Loc.Get("Editor_SoundDialogTitle"),
+            Filter = Loc.Get("Editor_SoundFilter"),
             CheckFileExists = true,
         };
 
@@ -265,15 +269,15 @@ public sealed partial class AlarmEditorViewModel : ObservableObject
 
         if (string.IsNullOrWhiteSpace(Title))
         {
-            erro = "Dê um nome ao alarme.";
+            erro = Loc.Get("Val_NeedName");
             return false;
         }
 
         var hora = default(TimeOnly);
 
-        if (HasFixedTime && !TimeOnly.TryParseExact(TimeText.Trim(), "HH\\:mm", PtBr, DateTimeStyles.None, out hora))
+        if (HasFixedTime && !TimeOnly.TryParseExact(TimeText.Trim(), "HH\\:mm", Culture, DateTimeStyles.None, out hora))
         {
-            erro = "Horário inválido. Use HH:mm, por exemplo 07:30.";
+            erro = Loc.Get("Val_BadTime");
             return false;
         }
 
@@ -284,7 +288,7 @@ public sealed partial class AlarmEditorViewModel : ObservableObject
             case ScheduleKind.Interval:
                 if (!int.TryParse(IntervalMinutesText.Trim(), out var minutos) || minutos < 1)
                 {
-                    erro = "Intervalo inválido. Informe os minutos, por exemplo 45.";
+                    erro = Loc.Get("Val_BadInterval");
                     return false;
                 }
 
@@ -293,16 +297,16 @@ public sealed partial class AlarmEditorViewModel : ObservableObject
 
                 if (UseWindow)
                 {
-                    if (!TimeOnly.TryParseExact(WindowFromText.Trim(), "HH\\:mm", PtBr, DateTimeStyles.None, out var inicio) ||
-                        !TimeOnly.TryParseExact(WindowToText.Trim(), "HH\\:mm", PtBr, DateTimeStyles.None, out var fim))
+                    if (!TimeOnly.TryParseExact(WindowFromText.Trim(), "HH\\:mm", Culture, DateTimeStyles.None, out var inicio) ||
+                        !TimeOnly.TryParseExact(WindowToText.Trim(), "HH\\:mm", Culture, DateTimeStyles.None, out var fim))
                     {
-                        erro = "Faixa de horário inválida. Use HH:mm nos dois campos.";
+                        erro = Loc.Get("Val_BadWindow");
                         return false;
                     }
 
                     if (inicio == fim)
                     {
-                        erro = "A faixa de horário precisa ter início e fim diferentes.";
+                        erro = Loc.Get("Val_WindowEqual");
                         return false;
                     }
 
@@ -321,9 +325,9 @@ public sealed partial class AlarmEditorViewModel : ObservableObject
                 break;
 
             case ScheduleKind.Once:
-                if (!DateOnly.TryParseExact(DateText.Trim(), "dd/MM/yyyy", PtBr, DateTimeStyles.None, out var data))
+                if (!DateOnly.TryParseExact(DateText.Trim(), DatePattern, Culture, DateTimeStyles.None, out var data))
                 {
-                    erro = "Data inválida. Use dd/MM/aaaa.";
+                    erro = Loc.Format("Val_BadDate", DatePattern);
                     return false;
                 }
 
@@ -333,7 +337,7 @@ public sealed partial class AlarmEditorViewModel : ObservableObject
 
                 if (quando <= _clock.Now)
                 {
-                    erro = "Esse instante já passou.";
+                    erro = Loc.Get("Val_PastInstant");
                     return false;
                 }
 
@@ -391,8 +395,8 @@ public sealed partial class AlarmEditorViewModel : ObservableObject
             case OneTimeSchedule once:
                 Kind = ScheduleKind.Once;
                 var local = TimeZoneInfo.ConvertTime(once.At, _clock.LocalTimeZone);
-                DateText = local.ToString("dd/MM/yyyy", PtBr);
-                TimeText = local.ToString("HH:mm", PtBr);
+                DateText = local.ToString(DatePattern, Culture);
+                TimeText = local.ToString("HH:mm", Culture);
                 break;
 
             case WeeklySchedule weekly:
@@ -412,7 +416,7 @@ public sealed partial class AlarmEditorViewModel : ObservableObject
 
             case IntervalSchedule intervalo:
                 Kind = ScheduleKind.Interval;
-                IntervalMinutesText = ((int)intervalo.Every.TotalMinutes).ToString(PtBr);
+                IntervalMinutesText = ((int)intervalo.Every.TotalMinutes).ToString(Culture);
                 UseWindow = intervalo.HasWindow;
 
                 if (intervalo.HasWindow)

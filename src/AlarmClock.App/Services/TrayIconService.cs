@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
+using AlarmClock.Core.Localization;
 using H.NotifyIcon;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -28,10 +29,10 @@ public sealed class TrayIconService(IServiceProvider services, ILogger<TrayIconS
             return;
         }
 
-        var abrir = new MenuItem { Header = "Abrir" };
+        var abrir = new MenuItem { Header = Loc.Get("Tray_Open") };
         abrir.Click += (_, _) => ShowMainWindow();
 
-        var sair = new MenuItem { Header = "Sair" };
+        var sair = new MenuItem { Header = Loc.Get("Tray_Exit") };
         sair.Click += (_, _) =>
         {
             _log.LogInformation("Encerramento solicitado pelo menu da bandeja.");
@@ -41,7 +42,7 @@ public sealed class TrayIconService(IServiceProvider services, ILogger<TrayIconS
         _icon = new TaskbarIcon
         {
             IconSource = new BitmapImage(new Uri("pack://application:,,,/Assets/app.ico", UriKind.Absolute)),
-            ToolTipText = "Despertador Produtivo",
+            ToolTipText = Loc.Get("App_Name"),
             ContextMenu = new ContextMenu
             {
                 Items = { abrir, new Separator(), sair },

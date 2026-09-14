@@ -1,7 +1,7 @@
-using System.Globalization;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Threading;
+using AlarmClock.Core.Localization;
 using AlarmClock.Core.Model;
 using AlarmClock.Core.Scheduling;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -13,8 +13,6 @@ public sealed record SnoozeOption(TimeSpan Duration, string Label);
 
 public sealed partial class AlertViewModel : ObservableObject, IDisposable
 {
-    private static readonly CultureInfo PtBr = TimeFormat.PtBr;
-
     private readonly IAlarmScheduler _scheduler;
     private readonly DispatcherTimer? _relogio;
 
@@ -30,7 +28,7 @@ public sealed partial class AlertViewModel : ObservableObject, IDisposable
         SnoozeOptions = [.. perfil.Snooze.Options.Select(d => new SnoozeOption(d, $"{d.TotalMinutes:0} min"))];
         DismissPhrase = perfil.DismissPhrase;
         DismissMode = perfil.Dismiss;
-        UrgencyName = perfil.DisplayName;
+        UrgencyName = Loc.UrgencyName(perfil.Level);
 
         AccentBrush = Application.Current.TryFindResource($"Brush.Urgency.{perfil.Level}") as Brush
                       ?? Brushes.OrangeRed;
@@ -39,9 +37,9 @@ public sealed partial class AlertViewModel : ObservableObject, IDisposable
         {
             // Um relógio grande no overlay: se o alerta te acordou, a primeira
             // coisa que você quer saber é que horas são.
-            NowText = DateTime.Now.ToString("HH:mm", PtBr);
+            NowText = DateTime.Now.ToString("HH:mm", Loc.Culture);
             _relogio = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
-            _relogio.Tick += (_, _) => NowText = DateTime.Now.ToString("HH:mm", PtBr);
+            _relogio.Tick += (_, _) => NowText = DateTime.Now.ToString("HH:mm", Loc.Culture);
             _relogio.Start();
         }
     }
@@ -75,27 +73,27 @@ public sealed partial class AlertViewModel : ObservableObject, IDisposable
     {
         get
         {
-            var hora = Trigger.ScheduledFor.ToLocalTime().ToString("HH:mm", PtBr);
+            var hora = Trigger.ScheduledFor.ToLocalTime().ToString("HH:mm", Loc.Culture);
 
             if (Trigger.Kind == TriggerKind.Escalation)
             {
-                return $"Ignorado, subiu para {UrgencyName}";
+                return Loc.Format("Alert_When_Escalated", UrgencyName);
             }
 
             if (Trigger.Kind == TriggerKind.Snooze)
             {
-                return $"Você adiou até {hora}";
+                return Loc.Format("Alert_When_Snoozed", hora);
             }
 
             if (!IsMissed)
             {
-                return $"Marcado para {hora}";
+                return Loc.Format("Alert_When_Scheduled", hora);
             }
 
-            var texto = $"Perdido: era {hora}, {Humanizar(Trigger.Delay)} atrás";
+            var texto = Loc.Format("Alert_When_Missed", hora, Humanizar(Trigger.Delay));
 
             return Trigger.SkippedOccurrences > 0
-                ? $"{texto} (+{Trigger.SkippedOccurrences} ocorrência(s) anteriores também perdidas)"
+                ? Loc.Format("Alert_When_MissedExtra", texto, Trigger.SkippedOccurrences)
                 : texto;
         }
     }
@@ -147,20 +145,20 @@ public sealed partial class AlertViewModel : ObservableObject, IDisposable
     {
         if (intervalo.TotalMinutes < 1)
         {
-            return "menos de um minuto";
+            return Loc.Get("Dur_LessThanMinute");
         }
 
         if (intervalo.TotalHours < 1)
         {
-            return $"{intervalo.TotalMinutes:0} min";
+            return Loc.Format("Dur_Min", (int)intervalo.TotalMinutes);
         }
 
         if (intervalo.TotalDays < 1)
         {
-            return $"{intervalo.Hours}h{intervalo.Minutes:00}";
+            return Loc.Format("Dur_HourMin", intervalo.Hours, intervalo.Minutes);
         }
 
-        return $"{intervalo.TotalDays:0} dia(s)";
+        return Loc.Format("Dur_Days", (int)intervalo.TotalDays);
     }
 
     public void Dispose() => _relogio?.Stop();

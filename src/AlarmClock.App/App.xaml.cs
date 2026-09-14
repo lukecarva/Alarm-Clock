@@ -1,9 +1,11 @@
+using System.Globalization;
 using System.Text;
 using System.Windows;
 using System.Windows.Threading;
 using AlarmClock.App.Services;
 using AlarmClock.App.ViewModels;
 using AlarmClock.Core.Abstractions;
+using AlarmClock.Core.Localization;
 using AlarmClock.Core.Persistence;
 using AlarmClock.Core.Scheduling;
 using Microsoft.Extensions.DependencyInjection;
@@ -48,8 +50,9 @@ public partial class App : Application
         AppPaths.EnsureCreated();
         ConfigureLogging();
         HookGlobalExceptionHandlers();
+        ResolveLanguage();
 
-        Log.Information("Despertador Produtivo iniciando. Dados em {Root}", AppPaths.Root);
+        Log.Information("Despertador Produtivo iniciando ({Idioma}). Dados em {Root}", Loc.Code, AppPaths.Root);
 
         _host = Host.CreateDefaultBuilder(e.Args)
             .UseSerilog()
@@ -141,6 +144,30 @@ public partial class App : Application
     }
 
     /// <summary>
+    /// Decide o idioma no arranque, antes de qualquer janela: a escolha salva
+    /// (do instalador ou do seletor no app) vence; sem ela, segue o Windows;
+    /// o fallback final é inglês. Não há troca a quente — o app reinicia.
+    /// </summary>
+    private static void ResolveLanguage()
+    {
+        var settings = SettingsStore.Load();
+
+        var idioma = settings.Language is { Length: > 0 } code
+            ? Loc.Parse(code)
+            : CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "pt"
+                ? AppLanguage.Portuguese
+                : AppLanguage.English;
+
+        Loc.Set(idioma);
+
+        // Alinha as culturas de formatação padrão do processo ao idioma.
+        CultureInfo.CurrentCulture = Loc.Culture;
+        CultureInfo.CurrentUICulture = Loc.Culture;
+        CultureInfo.DefaultThreadCurrentCulture = Loc.Culture;
+        CultureInfo.DefaultThreadCurrentUICulture = Loc.Culture;
+    }
+
+    /// <summary>
     /// Um despertador que morre calado é pior que um que não existe: se o
     /// processo cair, o alarme não toca e você não fica sabendo. Tudo que
     /// escapar vai para o log antes de o processo sumir.
@@ -168,8 +195,8 @@ public partial class App : Application
         e.Handled = true;
 
         MessageBox.Show(
-            $"Ocorreu um erro inesperado na interface. O despertador continua rodando.\n\n{e.Exception.Message}\n\nDetalhes em: {AppPaths.LogsFolder}",
-            "Despertador Produtivo",
+            Loc.Format("Error_UIBody", e.Exception.Message, AppPaths.LogsFolder),
+            Loc.Get("App_Name"),
             MessageBoxButton.OK,
             MessageBoxImage.Warning);
     }

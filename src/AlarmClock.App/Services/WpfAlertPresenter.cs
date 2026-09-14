@@ -47,7 +47,7 @@ public sealed class WpfAlertPresenter(
             _log.LogInformation(
                 "Alarme {Titulo} perdido e descartado conforme o nível {Nivel}.",
                 trigger.Alarm.Title,
-                trigger.EffectiveProfile.DisplayName);
+                trigger.EffectiveUrgency);
 
             return;
         }
@@ -73,7 +73,7 @@ public sealed class WpfAlertPresenter(
         _log.LogInformation(
             "Alerta: {Titulo} [{Nivel}/{Modo}] motivo={Motivo}.",
             trigger.Alarm.Title,
-            trigger.EffectiveProfile.DisplayName,
+            trigger.EffectiveUrgency,
             modo.ToString(),
             trigger.Kind.ToString());
 

@@ -4,6 +4,7 @@ using System.Reflection;
 using System.Windows.Threading;
 using AlarmClock.App.Services;
 using AlarmClock.Core.Abstractions;
+using AlarmClock.Core.Localization;
 using AlarmClock.Core.Scheduling;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -36,8 +37,12 @@ public sealed partial class MainViewModel : ObservableObject
         _clock = clock;
         _log = log;
 
-        Version = Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "0.0.0";
+        var version = Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "0.0.0";
+        VersionText = Loc.Format("Main_Version", version);
+        DataFolderText = Loc.Format("Main_DataFolder", AppPaths.Root);
+
         _startWithWindows = _startup.IsEnabled;
+        _isPortuguese = Loc.Language == AppLanguage.Portuguese;
 
         _alarms.Changed += (_, _) => Rebuild();
         Rebuild();
@@ -68,19 +73,48 @@ public sealed partial class MainViewModel : ObservableObject
 
     public ObservableCollection<AlarmRowViewModel> Alarms { get; } = [];
 
-    public string Version { get; }
+    public string VersionText { get; }
 
-    public string DataFolder => AppPaths.Root;
+    public string DataFolderText { get; }
 
     public bool HasAlarms => Alarms.Count > 0;
 
+    /// <summary>Pedido de reinício após trocar o idioma; a janela confirma e reinicia.</summary>
+    public event Action? RestartRequested;
+
     [ObservableProperty]
-    private string _nextAlarmSummary = "Nenhum alarme configurado";
+    private string _nextAlarmSummary = string.Empty;
 
     [ObservableProperty]
     private bool _startWithWindows;
 
     partial void OnStartWithWindowsChanged(bool value) => _startup.SetEnabled(value);
+
+    // Seletor de idioma. A troca só vale ao reiniciar (o idioma é resolvido no
+    // arranque), então salvamos a escolha e pedimos o reinício.
+    [ObservableProperty]
+    private bool _isPortuguese;
+
+    public bool IsEnglish
+    {
+        get => !IsPortuguese;
+        set { if (value) { IsPortuguese = false; } }
+    }
+
+    partial void OnIsPortugueseChanged(bool value)
+    {
+        OnPropertyChanged(nameof(IsEnglish));
+
+        var escolhido = value ? AppLanguage.Portuguese : AppLanguage.English;
+        if (escolhido == Loc.Language)
+        {
+            return;
+        }
+
+        SettingsStore.Save(new AppSettings { Language = value ? "pt-BR" : "en" });
+        _log.LogInformation("Idioma alterado para {Idioma}. Reinício solicitado.", escolhido);
+        RestartRequested?.Invoke();
+    }
 
     [RelayCommand]
     private void NewAlarm()
@@ -163,9 +197,9 @@ public sealed partial class MainViewModel : ObservableObject
 
         if (proxima is null)
         {
-            return HasAlarms ? "Nenhum alarme ativo" : "Nenhum alarme configurado";
+            return Loc.Get(HasAlarms ? "Status_NoneActive" : "Status_NoneConfigured");
         }
 
-        return $"Próximo alarme {TimeFormat.Relative(proxima.Value, _clock)}";
+        return Loc.Format("Status_NextPrefix", TimeFormat.Relative(proxima.Value, _clock));
     }
 }

@@ -1,7 +1,8 @@
 <Window x:Class="AlarmClock.App.Views.OverlayWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Alarme"
+        xmlns:loc="clr-namespace:AlarmClock.App.Localization"
+        Title="{loc:Loc Alert_WindowTitle}"
         WindowStyle="None"
         ResizeMode="NoResize"
         ShowInTaskbar="False"
@@ -28,7 +29,7 @@
             <TextBlock Style="{StaticResource Text.Caption}"
                        Margin="0,14,0,0"
                        TextAlignment="Center"
-                       Text="Use a tela principal para dispensar" />
+                       Text="{loc:Loc Alert_UseMainScreen}" />
         </StackPanel>
     </Border>
 </Window>

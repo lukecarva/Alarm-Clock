@@ -116,10 +116,10 @@ public sealed record IntervalSchedule(
 
     public string Describe()
     {
-        var texto = $"A cada {FormatEvery()}";
+        var texto = Localization.Loc.Format("Sched_Every", FormatEvery());
 
         return HasWindow
-            ? $"{texto}, {ActiveFrom:HH\\:mm} às {ActiveTo:HH\\:mm}"
+            ? $"{texto}, {ActiveFrom:HH\\:mm} {Localization.Loc.Get("Sched_WindowSep")} {ActiveTo:HH\\:mm}"
             : texto;
     }
 

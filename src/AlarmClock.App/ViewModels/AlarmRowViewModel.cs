@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Media;
 using AlarmClock.Core.Abstractions;
+using AlarmClock.Core.Localization;
 using AlarmClock.Core.Model;
 using CommunityToolkit.Mvvm.ComponentModel;
 
@@ -36,7 +37,7 @@ public sealed partial class AlarmRowViewModel : ObservableObject
 
     public string ScheduleText => Alarm.Schedule.Describe();
 
-    public string UrgencyName => Alarm.Profile.DisplayName;
+    public string UrgencyName => Loc.UrgencyName(Alarm.Urgency);
 
     public Brush AccentBrush { get; }
 
@@ -57,13 +58,13 @@ public sealed partial class AlarmRowViewModel : ObservableObject
         {
             if (!Alarm.IsEnabled)
             {
-                return "desligado";
+                return Loc.Get("Row_Off");
             }
 
             var proxima = Alarm.Schedule.NextOccurrenceAfter(_clock.Now, _clock.LocalTimeZone);
 
             return proxima is null
-                ? "sem próxima ocorrência"
+                ? Loc.Get("Row_NoNext")
                 : TimeFormat.Relative(proxima.Value, _clock);
         }
     }

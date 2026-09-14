@@ -28,6 +28,8 @@ frente do computador.
 - **Som com fade** — toque sintetizado embutido, ou um arquivo seu.
 - **Fica na bandeja** — fechar a janela esconde; sair é pelo menu do ícone.
 - **Início com o Windows** — opcional, via `HKCU` (sem admin).
+- **Bilíngue (PT-BR / English)** — o instalador pergunta o idioma e o app abre
+  nele; dá para trocar depois no rodapé (aplica ao reiniciar).
 
 ### Níveis de urgência
 
@@ -56,6 +58,9 @@ A instalação é **por usuário, sem admin**: cai em
 `%LOCALAPPDATA%\Programs\Despertador Produtivo`, cria atalho no Menu Iniciar e
 oferece "iniciar com o Windows" e atalho na área de trabalho como opcionais.
 Desinstalar preserva seus dados em `%APPDATA%\AlarmClock`.
+
+O assistente começa perguntando o **idioma** (Português ou English) e grava a
+escolha, então o app já abre no idioma certo.
 
 O app é *framework-dependent*: exige o **.NET 8 Desktop Runtime (x64)** — o
 instalador detecta a ausência dele e mostra o link antes de seguir.
