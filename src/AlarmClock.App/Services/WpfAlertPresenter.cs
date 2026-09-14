@@ -25,6 +25,9 @@ public sealed class WpfAlertPresenter(
     /// <summary>On-screen alerts by alarm; prevents two alerts for one alarm. | Alertas na tela por alarme; impede dois alertas do mesmo alarme.</summary>
     private readonly Dictionary<Guid, AlertSession> _abertos = [];
 
+    /// <summary>Open corner cards, bottom-most first, kept stacked without overlap. | Cards de canto abertos, o de baixo primeiro, mantidos empilhados sem sobreposição.</summary>
+    private readonly List<AlertWindow> _cantos = [];
+
     /// <summary>Presents a triggered alarm (skips, toast, window or escalation). | Apresenta um alarme disparado (pula, toast, janela ou escalada).</summary>
     public void Show(AlarmTriggeredEventArgs trigger)
     {
@@ -113,12 +116,27 @@ public sealed class WpfAlertPresenter(
 
             if (modo == PresentationMode.Corner)
             {
-                janela.UpdateLayout();
-                Win32Windows.PlaceInCorner(janela);
+                // Stack above any card already in the corner instead of covering it. | Empilha acima de qualquer card já no canto em vez de cobri-lo.
+                _cantos.Add(janela);
+                RestackCorners();
             }
         }
 
         sessao.Audio.Play(som);
+    }
+
+    /// <summary>Lays the open corner cards out upward from the bottom, without overlap. | Dispõe os cards de canto abertos de baixo para cima, sem sobreposição.</summary>
+    private void RestackCorners()
+    {
+        const int gap = 8;
+        var offset = 0;
+
+        foreach (var card in _cantos)
+        {
+            card.UpdateLayout();
+            Win32Windows.PlaceInCorner(card, offset);
+            offset += Win32Windows.PhysicalHeight(card) + gap;
+        }
     }
 
     /// <summary>Covers every monitor: main window plus one overlay per extra screen. | Cobre todos os monitores: janela principal mais um overlay por tela extra.</summary>
@@ -189,6 +207,12 @@ public sealed class WpfAlertPresenter(
         foreach (var overlay in sessao.Overlays)
         {
             overlay.Close();
+        }
+
+        // Reflow the remaining corner cards so no gap is left behind. | Recompacta os cards de canto restantes para não deixar buraco.
+        if (_cantos.Remove(sessao.Window))
+        {
+            RestackCorners();
         }
     }
 

@@ -54,24 +54,26 @@ internal static class Win32Windows
 
     /// <summary>
     /// Docks the window at the bottom-right of the primary work area, using its
-    /// measured size. | Encosta a janela no canto inferior direito da área de trabalho principal,
-    /// usando o tamanho já medido.
+    /// measured size. <paramref name="stackOffsetPx"/> lifts it above earlier cards. | Encosta a janela no canto inferior direito da área de trabalho principal,
+    /// usando o tamanho já medido. <paramref name="stackOffsetPx"/> a levanta acima dos cards anteriores.
     /// </summary>
-    public static void PlaceInCorner(Window window, int marginPx = 16)
+    public static void PlaceInCorner(Window window, int stackOffsetPx = 0, int marginPx = 16)
     {
         var area = System.Windows.Forms.Screen.PrimaryScreen?.WorkingArea
                    ?? new Rectangle(0, 0, 1280, 720);
 
-        var escala = ScaleOf(window);
-        var largura = (int)Math.Round(window.ActualWidth * escala);
-        var altura = (int)Math.Round(window.ActualHeight * escala);
-
         var destino = new Rectangle(
-            area.Right - largura - marginPx,
-            area.Bottom - altura - marginPx,
-            largura,
-            altura);
+            area.Right - PhysicalWidth(window) - marginPx,
+            area.Bottom - PhysicalHeight(window) - marginPx - stackOffsetPx,
+            PhysicalWidth(window),
+            PhysicalHeight(window));
 
         PlacePhysical(window, destino, activate: false);
     }
+
+    /// <summary>Window width in physical pixels, from its measured size. | Largura da janela em pixels físicos, a partir do tamanho medido.</summary>
+    public static int PhysicalWidth(Window window) => (int)Math.Round(window.ActualWidth * ScaleOf(window));
+
+    /// <summary>Window height in physical pixels, from its measured size. | Altura da janela em pixels físicos, a partir do tamanho medido.</summary>
+    public static int PhysicalHeight(Window window) => (int)Math.Round(window.ActualHeight * ScaleOf(window));
 }

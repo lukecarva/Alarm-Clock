@@ -26,6 +26,16 @@
     <AssemblyName>DespertadorProdutivo</AssemblyName>
     <RootNamespace>AlarmClock.App</RootNamespace>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
+    <!-- Per-monitor DPI awareness (PerMonitorV2) for sharp alerts on mixed-scale
+         multi-monitor setups. | Reconhecimento de DPI por monitor (PerMonitorV2)
+         para alertas nítidos em multi-monitor com escalas diferentes. -->
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- WFAC010 pede configurar DPI pela API do WinForms; este é um app WPF que só
+         usa WinForms para enumerar telas (sem loop de mensagens), então o manifesto
+         é o único mecanismo que vale. | WFAC010 asks to set DPI via the WinForms API;
+         this is a WPF app that uses WinForms only to enumerate screens (no message
+         loop), so the manifest is the mechanism that actually applies. -->
+    <NoWarn>$(NoWarn);WFAC010</NoWarn>
     <Version>0.1.0</Version>
   </PropertyGroup>
 
